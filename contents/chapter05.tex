@@ -1,0 +1,525 @@
+% !TeX root = ../main.tex
+
+\chapter{Application of Implied Barrier}\label{chap:application}
+    
+    We use the implied barrier to develop a novel binary default prediction scheme 
+    for publicly listed companies. Furthermore, we propose a new scheme to evaluate 
+    the performance of binary default prediction schemes.
+    Section~\ref{sec:application-terminology} discusses the terminological issues in 
+    default prediction research and clarifies what constitutes a default event. 
+    Section~\ref{sec:application-model} introduces the underlying model of our 
+    prediction scheme and Section~\ref{sec:application-prediction} explains how the
+    binary prediction scheme works. Section~\ref{sec:application-evaluation} 
+    elaborates on how the predictions are evaluated. We also explain related 
+    literature and compare their approaches with ours. 
+    Section~\ref{sec:application-experiments} shows the experiment results of our 
+    scheme.
+
+\section{Bankruptcy, Failure, Financial Distress, Default, and Other Exits}\label{sec:application-terminology}
+
+    Research on corporate default has been active for about 60 years. However, the
+    terminology has not always been consistent. The same term can mean different
+    things or the coverages of the different terms may overlap. This section briefly 
+    discusses five commonly used terms: bankruptcy, failure, financial distress, 
+    default (our focus), and other exits. 
+
+    \textit{Bankruptcy} is often limited to Chapter 7 or Chapter 11 filings, but 
+    \cite{Brockman2003} adds ``delisting due to liquidation and poor performance'' 
+    and \cite{DSW} includes Chapter 10 filing. For \cite{Beaver1966}, 
+    \textit{failure} indicates ``bankruptcy, bond default, an overdrawn bank account, 
+    or nonpayment of a preferred stock dividend,'' but \cite{Ohlson1980} identifies 
+    it with Chapter 10 or Chapter 11 filings. \cite{Zmijewski1984} uses 
+    \textit{financial distress} to mean a ``company filing a petition for 
+    bankruptcy,'' In contrast, \cite{Campbell2008} use the term to include both 
+    bankruptcy and failure, where failure encompasses ``bankruptcy, delisting, and 
+    receiving a D credit rating.'' \textit{Default} subsumes bankruptcy, but 
+    disagreements abound beyond that. For example, default in \cite{DSW} includes 
+    bankruptcy and ``distressed exchange, dividend omission, $\ldots$, missed payment 
+    events in dividend, interest, or principal,'' whereas \cite{FIM} adds delisting. 
+
+    \textit{Other exits} was first proposed by \cite{DSW} as one of their five types 
+    of firm exits, which are not mutually exclusive: bankruptcy, default, failure, 
+    merger and acquisition (M\&A), and other exits. This category considers events 
+    such as reverse acquisition, leveraged buyout, or becoming a private company. 
+    \cite{FIM} reduce these classifications to two mutually exclusive categories: 
+    default and other exits. Bankruptcy, default, and failure of \cite{DSW} are 
+    lumped into default while M\&A and other exits are now other exits. One notable 
+    difference is that \cite{DSW} treats conservatorship as other exits, whereas 
+    \cite{FIM} classify it as default. Our definition of default will follow 
+    \cite{FIM}.
+
+\section{Model}\label{sec:application-model}
+
+    We assume the firm's asset value at time $t$, $V^\text{A}_t$, follows the 
+    stochastic process:
+    \begin{equation}
+        d\text{ln}V^\text{A}_t = \left(\mu-\frac{1}{2}\sigma^2\right)\,dt + \sigma\,dW,
+        \label{eq:va}
+    \end{equation}
+    where $\mu$ is the asset's annual growth rate and $\sigma$ its annualized 
+    volatility. In a first-passage-time structural model, the firm's equity 
+    value $V^\text{E}_t$ can be regarded as a contingent claim on the firm's asset,
+    analogous to a DOC (see~\cite{FPM}). The DOC price equals 
+    \begin{align}
+        V^{\text{E}}_t\quad=\quad&V^\text{A}_t\,N(a) - Ke^{-rT}\,N\left(a-\sigma\sqrt{T}\right) \notag \\[5mm]
+                                 &- V^\text{A}_t\left(\frac{B}{V^\text{A}_t}\right)^2\eta\,N(b) + Ke^{-rT}\left(\frac{B}{V^\text{A}_t}\right)^{2\eta-2}\,N\left(b-\sigma\sqrt{T}\right) \notag \\[5mm]
+                                 &+ R\left(\frac{B}{V^\text{A}_t}\right)^{2\eta-1}\,N(c) + R\left(\frac{V^\text{A}_t}{B}\right)\,N(c-2\eta\sigma\sqrt{T}),
+        \label{eq:doc_payoff_structural}
+    \end{align}
+    where $r$ is the risk-free interest rate, $B$ is the constant default boundary, 
+    $K$ represents the liabilities due at $T$, and $R$ is the rebate that 
+    shareholders receive if the firm defaults. There are no other payoffs before $T$
+    than the rebate. The formulas for $a$, $b$, $c$, and $\eta$ are defined in 
+    Appendix~\ref{appendix:abeta}. \cite{Brockman2003} simplify the DOC model by 
+    assuming $R = 0$ and infer $B$ from $V^{\text{E}}_0$, $V^{\text{A}}_0$, $K$, $T$,
+    $\sigma$, and $r$. They use the difference between the book value of assets and 
+    equity for $K$ and 10 years for $T$. For them, $T$ is the maturity of the DOC and 
+    represents the expected lifespan of the company, not the maturity of debt 
+    payments nor some estimated default time. They found that the default boundary is 
+    insensitive to $T$ with $T = 3, 5, 10, 30, 100$ (years) for companies on the 
+    NYSE, AMEX, and Nasdaq. \cite{Dionne2012} also reach the insensitive conclusion 
+    with $T = 5, 10, 20$ for public Canadian industrial firms listed on the Toronto 
+    Stock Exchange. 
+
+    In contrast to \cite{Brockman2003}, which infers the default boundary from a 
+    firm's equity value, we infer the default boundary from its default 
+    probabilities. Consider a firm's term structure of default probability up to $T$ 
+    in the {\em objective \/} probability measure $P$ (recall
+    Section~\ref{sec:preliminaries-term}). By probability theory, 
+    \begin{align}
+               &\text{Pr}^P\left(V^\text{A}_t \leq B_t \quad \text{for some}\,t\in[\,0, T\,]\right) \nonumber \\
+        =\quad &E^P\left[\mathbbm{1}\left\llbracket V^\text{A}_t \leq B_t \quad \text{for some}\,t\in[\,0, T\,]\right\rrbracket\right].
+        \label{eq:dc}
+    \end{align}
+    Equation~(\ref{eq:dc}) gives the expected payoff under $P$ of a DODC that pays 
+    one dollar at $T$ if the underlying asset does not touch the default boundary at 
+    or before $T$ and zero otherwise. There are two differences between the
+    \citetalias{Brockman2003} model and ours. First, our default boundary is 
+    time-varying rather than constant. For \cite{Brockman2003}, the default boundary 
+    reflects contractual factors like redemption and safety covenants, or even 
+    situations such as regulatory violations. A constant default boundary is clearly 
+    oversimplifying. Second, for a DOC model like \citetalias{Brockman2003}, $T$ 
+    represents the maturity date of the DOC at which point the firm pays off its 
+    liabilities and the remaining asset value goes to the shareholders. In contrast, 
+    our $T$ is a horizon for default probabilities; it is not tied to any contractual 
+    payoff or termination event.
+
+\section{Our Default Prediction Scheme}\label{sec:application-prediction}
+
+    We propose a new default prediction scheme based on the first-passage-time 
+    structural model with a default boundary. First, the default boundary is obtained 
+    as the implied step barrier inverted from a firm's default probabilities. The 
+    expected asset values are then calculated at the monitored time points where the 
+    default probabilities are available. A default signal is generated if the 
+    expected asset values ever touch or cross the default boundary from above. 
+    Our default prediction scheme is binary: The outcome is either ``default'' 
+    or ``no-default.''
+
+    Before describing the scheme in more detail, we recall the core algorithm in 
+    Section~\ref{sec:algorithms-core}. Given $m$ time intervals $(\,t_0, t_0+t_1\,]$, 
+    $(\,t_0+t_1, t_0+t_2\,]$, $\ldots$, $(\,t_0+t_{m-1}, t_0+t_m\,]$, the core 
+    algorithm finds the implied step barrier $[\,b_1, b_2, \ldots, b_m\,]$ that gives 
+    rise to the term structure of default probabilities $p_1, p_2, \ldots, p_m$ 
+    exactly observed at time $t_0$. The implied step barrier is our default boundary. 
+    We refer to $t_m$ as the prediction horizon. In this chapter, $t_i = i$ 
+    (months) and $m = 60$.
+
+    Next, compute the expected asset values at the monitored time points $t_0+1$, 
+    $t_0+2$, $\ldots$, $t_0+m$ as $a_1, a_2, \ldots, a_m$, respectively. To find 
+    $b_1$ for $(\,t_0, t_0+1\,]$, the core algorithm has a tree like 
+    Figure~\ref{fig:bino_tri_lattice_with_barrier}. To calculate the expected asset 
+    value $a_1$, we take the asset values of the nodes above $b_1$ at time $t_0+1$ 
+    and compute their survival probability-weighted sum. The remaining 
+    $a_2, \ldots, a_m$ are calculated likewise. 
+
+    Finally, the scheme checks if the expected asset values touch or cross the 
+    default boundary as follows. For any time interval $(\,t_0+t_i, t_0+t_{i+1}\,]$, 
+    if there exists an $i$ such that $a_i > b_i$ but $a_{i+1} \leq b_{i+1}$, which 
+    means the expected asset value touches or crosses the default boundary during 
+    $(\,t_0+t_i, t_0+t_{i+1}\,]$, the scheme generates a default signal; otherwise, 
+    the scheme generates a no-default signal.
+
+\section{Evaluation Schemes}\label{sec:application-evaluation}
+
+    For default prediction schemes that output a default probability, there are three 
+    major approaches to evaluating them in the literature. The first one runs a 
+    logistic regression with the default probability as the independent variable and 
+    default event as the dependent variable. The second one calculates the area under 
+    receiver operating characteristic (ROC) curve (see~\cite{DSW} and \cite{FIM}). 
+    The third one sorts the default probabilities into, say, deciles before 
+    calculating the percentage of the firms with default events in the top decile 
+    (see~\cite{Shumway2001}, \cite{Brockman2003}, and \cite{Chava2004}). 
+
+    Methods like logistic regression, ROC curve, and the decile approach evaluate 
+    performance using panel data in which each firm-month observation contributes one 
+    sample. Considering that default is a rare event (see~\cite{Hanson2006}), the way 
+    they treat all firm-month observations as contemporaneous may boost the 
+    performance unintentionally. Take Federal Home Loan Mortgage (Freddie Mac) in the 
+    CRI dataset as an example. The dataset records 228 monthly observations and one 
+    default event from January 1991 through July 2010. For evaluation schemes that 
+    treat each firm-month observation as a distinct sample, there will be 228 samples 
+    for Freddie Mac. If a default prediction scheme simply gives no-default signals 
+    for all these 228 samples, its accuracy can appear very high, 227/228=99.6\% in 
+    this case even though it fails to identify the one all-important default event. 
+    For convenience, we refer to this type of evaluation scheme as FM.
+
+    Our new evaluation scheme is firm-centric, which will be called the FC scheme
+    throughout this chapter. Instead of treating each monthly signal of a binary 
+    default prediction scheme as a distinct sample, the entire sequence of monthly 
+    signals for a firm determines whether the FC scheme makes the correct call about 
+    the firm. The main advantage of this approach is that it alleviates the extreme 
+    imbalance in numbers between the default and non-default events by making each 
+    firm contribute only one sample to the performance metrics regardless of its 
+    number of monthly observations, most of which have no default events at all. In 
+    fact, the firm-centric approach suits a binary default scheme better when dealing 
+    with rare events (this point will be elaborated upon shortly). 
+
+    The FC scheme works as follows. First, it runs our default prediction scheme for 
+    each firm observed at times $t_0 = t_s, t_s+1, t_s+2, \ldots, t_e$, where $t_s$ 
+    is the first time point the firm has an entry in the dataset and $t_e$ is the 
+    last. All classifications will be based on the prediction signals and the real 
+    events recorded in the dataset within $[\,t_s, t_e+60\,]$. We treat 
+    $[\,t_e+1, t_e+60\,]$ as if the dataset recorded no default events in this 
+    extended time interval. 
+
+    Next, each firm is categorized into one of four groups for statistical analysis 
+    as follows. If a firm books a default event in the dataset, a correct call for 
+    the firm means the \emph{first} default event happens within the prediction 
+    horizon of the \emph{first} default signal, which will be labeled as a true 
+    positive (TP). If a firm never defaults, a correct call for the firm means the 
+    default prediction scheme generates only no-default signals, which will be 
+    labeled as a true negative (TN). All the other scenarios are considered wrong 
+    calls. A false positive (FP) occurs when (1) the firm never defaults but a 
+    default signal is generated at least once, (2) the firm defaults before the first 
+    default signal, or (3) the firm defaults after the prediction horizon of the 
+    first default signal. A false negative (FN) occurs if the firm books a default 
+    event in the dataset but the default prediction scheme generates only no-default 
+    signals. To the best of our knowledge, our evaluation scheme is the first of its 
+    kind. The key characteristic of it is that the default prediction scheme makes a 
+    wrong call for a firm with just one single wrong prediction over the period of 
+    time the firm is being tracked.
+
+    After each firm is classified, we calculate four common performance metrics: 
+    accuracy, precision, recall, and the F1 score. They are defined as 
+    \begin{align*}
+        \text{accuracy} \quad &=\quad \frac{\text{TP}+\text{TN}}{\text{TP}+\text{FP}+\text{FN}+\text{TN}},\\[10pt]
+        \text{precision}\quad &=\quad \frac{\text{TP}}{\text{TP}+\text{FP}},\\[10pt]
+        \text{recall}   \quad &=\quad \frac{\text{TP}}{\text{TP}+\text{FN}},\\[10pt]
+        \text{F1}       \quad &=\quad 2\times\frac{\text{precision} \times \text{recall}}{\text{precision}+\text{recall}},
+    \end{align*}
+    respectively (see~\cite{Goodfellow2016}). Accuracy refers to the proportion of 
+    correct calls among all the firms. Precision measures the percentage of correct 
+    calls among firms receiving default signals. Recall measures the percentage of 
+    correct calls among firms with default events. The F1 score, the harmonic mean of 
+    precision and recall, offers a balanced assessment of a model's predictive 
+    performance.
+    
+    We now analyze a typical FM scheme's TP, TN, FP, FN, and the above four 
+    performance metrics compared with our FC scheme's. Now every monthly signal 
+    contributes one to exactly one of the TP, TN, FP, and FN counts as follows: 
+    \begin{itemize}
+        \item[1.] For each TP by the FC scheme, scheme FM adds one to TP and the number 
+            of monthly observations before the first default signal to TN\@. The former 
+            is true because TP occurs only in the month when our default prediction 
+            scheme generates the first default signal. The latter is true because our 
+            default prediction scheme must have generated consecutive monthly no-default 
+            signals before then and they are all correct.
+        \item[2.] For each TN by the FC scheme, scheme FM adds the number of monthly 
+            observations in the dataset to TN\@. This is because this many months have 
+            neither default events nor default signals.
+        \item[3.] For each FP by the FC scheme, scheme FM adds one to FP and the number 
+            of monthly observations before the first default signal to TN\@. The former 
+            is true because FP occurs only in the month when our default prediction 
+            scheme generates the first default signal. The latter is true for the same 
+            reason as in the case of TP.
+        \item[4.] For each FN by the FC scheme, scheme FM adds one to FN and the number 
+            of monthly observations before the first default event to TN\@. The former is 
+            true because FN occurs only in the month when the default event happens. The 
+            latter follows the convention in the case of TP.
+    \end{itemize}
+    Note that only the TN count is affected when switching from FC to FM\@. As a 
+    result, only accuracy is changed among the four performance metrics because it is 
+    the only one that takes TN into consideration. 
+
+    Let $\text{TN}_\text{FM}$ and $\text{accuracy}_\text{FM}$ denote the values of TN 
+    and accuracy under scheme FM. Hence    
+    {\footnotesize
+    \begin{alignat}{2}
+        \text{TN}_\text{FM} &\quad=&&\quad \left(\vcenter{\hbox{\shortstack{Avg. number of monthly observations before \\ the first default signal per TP of the FC scheme}}}\right) \times \text{TP} \notag \\[5pt]
+                            &\quad+&&\quad \left(\vcenter{\hbox{\shortstack{Avg. number of monthly observations \\ in the dataset per TN of the FC scheme}}}\right) \times \text{TN} \notag \\[5pt]
+                            &\quad+&&\quad \left(\vcenter{\hbox{\shortstack{Avg. number of monthly observations before \\ the first default signal per FP of the FC scheme}}}\right) \times \text{FP} \notag \\[5pt]
+                            &\quad+&&\quad \left(\vcenter{\hbox{\shortstack{Avg. number of monthly observations before \\ the first default event per FN of the FC scheme}}}\right) \times \text{FN} \label{eq:tn_fm} \\[15pt]
+        \text{accuracy}_\text{FM} &\quad=&&\quad \frac{\text{TP}+\text{TN}_\text{FM}}{\text{TP}+\text{FP}+\text{FN}+\text{TN}_\text{FM}}. \label{eq:accuracy_fm}
+    \end{alignat}
+    } %
+    \par\noindent
+    That defaults are rare has two implications for any large and representative 
+    dataset. First, firms with no default events typically stay in the dataset for 
+    many months, which means that the coefficient of TN in formula~(\ref{eq:tn_fm}) 
+    is large.\footnote{For the CRI dataset, the average number is 109.82 months.}
+    %First, each default event is typically preceded by many months in which 
+    %the firm does not default. 
+    Second, TN is usually orders of magnitude greater than TP, FP, and FN. These two 
+    observations together indicate that $\text{TN}_\text{FM}$ dominates TP, TN, FP, 
+    and FN. As a result, $\text{accuracy}_\text{FM}$ will be close to 100\% by 
+    formula~(\ref{eq:accuracy_fm}). Take the CRI dataset as an example. When the 
+    prediction horizon is 60 months, $\text{TP} = 499$, $\text{TN} = 14620$, 
+    $\text{FP} = 334$, $\text{FN} = 526$, and $\text{accuracy} = 92.39\%$. In 
+    comparison, $\text{TN}_\text{FM} = 1755358$
+    %\footnote{The coefficients in formula~(\ref{eq:tn_fm}) are 99.23, 109.82, 83.93, 
+    %and 79.39.} 
+    and $\text{accuracy}_\text{FM} = 99.95\%$, which is very close to 100\%. Our FC 
+    scheme clearly does not give a misleadingly high accuracy as the FM scheme.
+
+    %We pause to point out that the FN by the FM scheme is arbitrary to some extent.
+    %When the prediction horizon is 60 
+    %months, for each FN by the FC scheme, scheme FM might legitimately add any number 
+    %between 1 and 59 (inclusively) to FN instead of our 1 used for 
+    %formula~(\ref{eq:tn_fm}). This is because there is a default event within the 
+    %prediction horizon of that many months before it which do not have default 
+    %signals. Take the CRI dataset as an example again. If we use 59 instead of 1, TP and FP remain unchanged, but 
+    %$\text{TN}_\text{FM} = 1715686$, $\text{FP} = 334$, $\text{FN} = 38745$, and
+    %$\text{accuracy}_\text{FM} = 97.77\%$.
+    %\footnote{The coefficients in formula~(\ref{eq:tn_fm}) are 99.23, 109.84, 83.93, 35.38.}
+
+    The final task is to compare our default prediction scheme with the 
+    default-probability-based ones. Because the latter are not binary, the first step 
+    is to decide a threshold $\theta$ for the predicted default probabilities such 
+    that a ``default'' signal is generated whenever the probability exceeds $\theta$. 
+    The $\theta$ is determined by a grid search from 0.01 to 0.99 such that the F1 
+    score is maximized. Note that $\theta$ depends on the prediction horizon and all 
+    the firm-month observations in the dataset. We call this the \emph{prescient} 
+    default prediction scheme because it uses future information. In contrast, our 
+    default prediction scheme does not see the future.
+
+\section{Experiments}\label{sec:application-experiments}
+
+    Our data are provided by the Credit Research Initiative (CRI) of the National 
+    University of Singapore (recall Section~\ref{sec:algorithms-experiments}). We 
+    work on all the companies listed on the NYSE, AMEX and Nasdaq. All are U.S. 
+    exchanges because the U.S. capital market is efficient and a more uniform legal 
+    code applies when only a single nation is covered. The data are monthly and span 
+    over 390 months, from January 1991 through June 2023. There are 16,873 firms and 
+    1,914,494 firm-month observations in total. For each firm-month observation, we 
+    have (1) $p_1, p_2, \cdots, p_{60}$, the term structure of the default 
+    probabilities up to 60 months, (2) $\mu$, the annual growth rate of the firm's 
+    asset, and (3) $\sigma$, the annualized volatility of the firm's asset. To 
+    calculate the default boundary, we need the above three variables and the initial 
+    asset value.
+
+    For structural models, the default event is triggered when the asset value 
+    touches the default boundary. So what matters is the asset values relative to the 
+    default boundary. The default probabilities remain unchanged under our 
+    constant-parameter model~(\ref{eq:va}) for any rescaling of $V^\text{A}_t$ and 
+    $B_t$ in equation~(\ref{eq:dc}). Therefore, we assume a firm's initial asset 
+    value is one dollar or $V_0^\text{A} = 1$. Under this convention, the asset value 
+    and the default boundary are both relative to the initial asset value.
+
+    Table~\ref{tb:summary_statistics} reports the summary statistics of the dataset. 
+    Default probabilities are cumulative. For example, a 3-month default probability 
+    refers to the probability of a default event over the ensuing 3 months, and a 
+    6-month default probability refers to the probability of a default event over the 
+    ensuing 6 months, both starting from now. Obviously, the default probabilities 
+    increase with time. We observe that default probabilities are small in general. 
+    Take the 12-month default probability in Table~\ref{tb:summary_statistics} as an 
+    example. The mean and median are $0.865\%$ and $0.100\%$, respectively. Even for 
+    the 60-month case, the mean and median are only $3.575\%$ and $1.947\%$, 
+    respectively. The distributions of default probabilities are positively skewed 
+    because the median is consistently smaller than the mean. This implies that a 
+    small number of firms have much higher default probabilities than the majority. 
+    This positive skewness applies to annual asset growth rates and annual asset 
+    volatilities as well. This is consistent with prior studies 
+    (see~\cite{Farago2022}).
+
+    \begin{table}[!t]
+    \centering
+        \caption{Summary statistics of all firm-month data. The firms are all 
+                 publicly listed on NYSE, AMEX, and Nasdaq. For brevity, we 
+                 list only the cumulative default probabilities at 1, 3, 6, 12, 24, 
+                 36, 48, and 60 months. All the numbers are 
+                 in percentage.}
+        \resizebox{0.9\textwidth}{!}{
+        \begin{tabular}{l|rrrrr}
+           \toprule 
+                                          & Mean     & Standard deviation & Minimum     & Median   & Maximum     \\[2pt] \midrule
+             $p_1$      & 0.061    & 0.734              & 0.000       & 0.001    & 89.350    \\[2pt]
+             $p_3$      & 0.193    & 1.678              & 0.000       & 0.006    & 99.737    \\[2pt]
+             $p_6$      & 0.410    & 2.594              & 0.000       & 0.021    & 99.871    \\[2pt]
+             $p_{12}$   & 0.865    & 3.635              & 0.000       & 0.100    & 99.872    \\[2pt]
+             $p_{24}$   & 1.697    & 4.585              & 0.000       & 0.433    & 99.872    \\[2pt]
+             $p_{36}$   & 2.404    & 5.047              & 0.000       & 0.901    & 99.872    \\[2pt]
+             $p_{48}$   & 3.024    & 5.330              & 0.000       & 1.422    & 99.872    \\[2pt]
+             $p_{60}$   & 3.575    & 5.524              & 0.000       & 1.947    & 99.872    \\[2pt] \midrule 
+             $\mu$      & $-$4.527 & 62.542             & $-$2247.233 & $-$0.800 & 4163.562  \\[2pt]
+             $\sigma$   & 49.611   & 54.924             & 4.460       & 35.241   & 2891.924  \\[2pt]
+            \bottomrule
+        \end{tabular}
+        }
+        \label{tb:summary_statistics}
+    \end{table}
+
+\subsection{The CRI Dataset: Default Events and Summary Statistics}
+
+    Recall that our terminology follows \cite{FIM}. There are 13,789 credit events in 
+    the dataset from January 1991 through June 2023. Among them, 1,595 are default 
+    events and 12,194 are other exits. The default events consist of three cases: (1) 
+    Companies filing for bankruptcy under Chapter 7, 11, or 15 of the United States 
+    bankruptcy code, (2) companies missing payments in coupon, interest, loan, or 
+    principal, and (3) companies that are taken into conservatorship of the United 
+    States government. Other exits include merger and acquisition or failure to meet 
+    the listing requirements, among others.\footnote{Please refer to 
+    \url{https://d.nuscri.org/static/pdf/Technicalreport_2023.pdf} for the full 
+    detail.} The summary statistics of the annual firm count and default count appear 
+    in Table~\ref{tb:company_number}. A firm is counted as active in a year if it has 
+    at least one firm-month observation in that year.
+    
+    \begin{table*}[!t]
+        \footnotesize
+        \centering
+        \caption{Numbers of active companies listed on NYSE, AMEX, and Nasdaq and 
+                 their default events per year during 1991--2023. A firm is counted 
+                 as active if it has at least one firm-month observation in that year.}
+        \begin{tabular}{ccrccr}
+            \toprule
+            Year & \# of active firm & \begin{tabular}[r]{@{}r@{}}\# of default events\\ (\% of default events)\end{tabular} & Year & \# of active firm & \begin{tabular}[r]{@{}r@{}}\# of default events\\ (\% of default events)\end{tabular} \\
+            \cmidrule(lr){1-3} \cmidrule(lr){4-6}
+                1991 & 3628            & 18 (0.496\%)                                                                        & 2008 & 4980            & 57 (1.145\%)                                                                        \\
+                1992 & 4563            & 16 (0.351\%)                                                                        & 2009 & 4621            & 96 (2.077\%)                                                                        \\
+                1993 & 5395            & 27 (0.500\%)                                                                        & 2010 & 4428            & 27 (0.610\%)                                                                        \\
+                1994 & 6279            & 16 (0.255\%)                                                                        & 2011 & 4277            & 31 (0.725\%)                                                                        \\
+                1995 & 6746            & 16 (0.237\%)                                                                        & 2012 & 4195            & 37 (0.882\%)                                                                        \\
+                1996 & 7289            & 17 (0.233\%)                                                                        & 2013 & 4184            & 21 (0.502\%)                                                                        \\
+                1997 & 7669            & 48 (0.626\%)                                                                        & 2014 & 4279            & 24 (0.561\%)                                                                        \\
+                1998 & 7829            & 73 (0.932\%)                                                                        & 2015 & 4393            & 46 (1.047\%)                                                                        \\
+                1999 & 7485            & 80 (1.069\%)                                                                        & 2016 & 4300            & 78 (1.814\%)                                                                        \\
+                2000 & 7210            & 103 (1.429\%)                                                                       & 2017 & 4223            & 46 (1.089\%)                                                                        \\
+                2001 & 6608            & 172 (2.603\%)                                                                       & 2018 & 4225            & 26 (0.615\%)                                                                        \\
+                2002 & 5919            & 108 (1.825\%)                                                                       & 2019 & 4225            & 43 (1.018\%)                                                                        \\
+                2003 & 5520            & 77 (1.395\%)                                                                        & 2020 & 4239            & 84 (1.982\%)                                                                        \\
+                2004 & 5326            & 37 (0.695\%)                                                                        & 2021 & 4924            & 22 (0.447\%)                                                                        \\
+                2005 & 5307            & 35 (0.660\%)                                                                        & 2022 & 5060            & 23 (0.455\%)                                                                        \\
+                2006 & 5243            & 20 (0.381\%)                                                                        & 2023 & 4793            & 47 (0.981\%)                                                                        \\
+                2007 & 5220            & 24 (0.460\%)                                                                        &      &                 &                                                                                     \\
+            \bottomrule
+        \end{tabular}
+        \label{tb:company_number}
+    \end{table*}
+
+    Figure~\ref{fig:ya} plots the numbers of publicly listed companies in the U.S. 
+    per year from Table~\ref{tb:company_number}. A downward trend started around 
+    1998. \cite{Doidge2017} find that the high delisting rate can be attributed to a 
+    high rate of M\&A, which may also explain why there are so many other exits
+    compared with default events in the CRI dataset. Since not all exits are caused 
+    by financial distress, a precise definition for ``default'' is critical before
+    evaluating a default prediction scheme (recall 
+    Section~\ref{sec:application-terminology}).
+
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = 0.8\textwidth]{figures/year_active.pdf}
+        \caption{Number of active companies per year on NYSE, AMEX, and Nasdaq from
+                 1991 through 2023.}
+        \label{fig:ya}
+    \end{figure*}
+
+    Figure~\ref{fig:yb} plots the number of default events per year. The four peak 
+    points, in 2001, 2009, 2016, and 2020, can be attributed to the dot-com bubble, 
+    the global financial crisis, the Chinese market crash (see~\cite{Ahmed2019}), and 
+    the US-China trade war (see~\cite{Huang2023}), respectively. Interestingly, these
+    four crises started one year earlier in 2000, 2008, 2015, and 2019, respectively. 
+    They show that default events arise rapidly about one year \emph{after} the 
+    financial downturn commenced. The upward trend at the end of the figure indicates 
+    a new wave of default events, which may be caused by COVID-19.
+
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = 0.8\textwidth]{figures/year_bankruptcy.pdf}
+        \caption{Number of default events per year from 1991 to 2023.}
+        \label{fig:yb}
+    \end{figure*}
+
+\subsection{Default boundary}
+
+    As an illustration, Figure~\ref{fig:ib} depicts the default boundary of Freddie 
+    Mac as of May 2008 with 60 barrier levels. The $x$-axis represents the number of 
+    months from that date, and the $y$-axis is the default boundary. For example, the 
+    default boundary is about $56.4\%$ of the initial asset value in month 7. So the 
+    expected asset value will touch the default boundary if it loses $43.6\%$ of its 
+    initial asset value in December 2008.
+
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = 0.6\textwidth]{figures/Federal_Home_Loan_Mortgage_Corp_2008-05-30_60m.pdf}
+        \caption{Default boundary of Freddie Mac as of May 2008.}
+        \label{fig:ib}
+    \end{figure*}
+
+\subsection{Evaluation: The Firm-Centric Approach}
+
+    Each firm has many monthly observations. Our default prediction scheme generates 
+    expected asset values, the default boundaries, and the signals (defaults or 
+    no-defaults) from them. We use Freddie Mac as an example to explain how the FC 
+    scheme makes the call about this firm (see Figure~\ref{fig:tp}). Our 
+    prediction scheme generates default signals in June, July, August, and September 
+    of 2008. Since the first default event, which is in September 2008, happens 
+    within 5 years of our first default signal, the firm counts as a TP.
+
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = \textwidth]{figures/true_positive.pdf}
+        \caption{Signals from our default prediction scheme for Freddie Mac. 
+                 The dashed lines are the expected asset values. 
+                 The solid lines are the default boundaries.}
+        \label{fig:tp}
+    \end{figure*}
+
+    Table~\ref{tb:results} shows the performance metrics of our default prediction 
+    scheme and the prescient default prediction scheme when both are evaluated by the 
+    FC scheme. The prediction horizons are 3, 6, 12, 36, and 60 months. The 
+    thresholds for the prescient scheme in the table are obtained by maximizing the 
+    F1 score among 0.01, 0.02, $\cdots$, 0.99, and 1 (see 
+    Section~\ref{sec:application-evaluation}). For example, a default signal for the 
+    12-month prediction horizon is generated in the prescient scheme if 
+    $p_{12} > 0.34$. 
+
+    In Table~\ref{tb:results}, our prediction scheme's accuracies are superior across 
+    all prediction horizons even when pitted against the prescient scheme that uses 
+    future information. Although the large TN relative to TP, FP, and FN makes all 
+    accuracies higher than 90\%, those from the FC scheme remain discriminative being 
+    between 90.54\% and 92.39\%. Had we used the FM scheme, the accuracies of both 
+    default prediction schemes would have been close to 100\%, making the metric 
+    useless in practice. Next, we discuss precision and recall together because their 
+    formulas are similar. Their only difference lies in the denominators: Precision 
+    uses TP $+$ FP, while recall uses TP $+$ FN. Between two reasonably good default 
+    prediction schemes, the one that generates fewer default signals tends to have 
+    lower FP and higher FN; as a result, precision tends to be higher and recall 
+    tends to be lower. This trade-off has been documented before 
+    (see~\cite{Manning2008}). In Table~\ref{tb:results}, our scheme consistently 
+    exhibits higher precision but lower recall and F1 score than the prescient scheme 
+    across all prediction horizons. This suggests that our prediction scheme is more 
+    \emph{conservative} in generating default signals. Therefore, its default signals 
+    are more likely to be correct. 
+
+    \begin{table}[!t]
+        \centering
+        \caption{Performance metrics. The Ours columns show the results of our default 
+                 prediction scheme. The P columns show the results of the prescient 
+                 default prediction scheme. Boldfaced numbers signify the outperformers.
+                 The prediction horizons are in months. Accuracy, precision, recall,
+                 and the F1 score are in percentage.}
+        \resizebox{0.95\textwidth}{!}{
+        \begin{tabular}{lrrrrrrrrrr}
+        \toprule
+            Prediction horizon & \multicolumn{2}{c}{3}                           & \multicolumn{2}{c}{6}                           & \multicolumn{2}{c}{12}                          & \multicolumn{2}{c}{36}                          & \multicolumn{2}{c}{60}                          \\ \midrule
+                    & \multicolumn{1}{c}{Ours} & \multicolumn{1}{c}{P} & \multicolumn{1}{c}{Ours} & \multicolumn{1}{c}{P} & \multicolumn{1}{c}{Ours} & \multicolumn{1}{c}{P} & \multicolumn{1}{c}{Ours} & \multicolumn{1}{c}{P} & \multicolumn{1}{c}{Ours} & \multicolumn{1}{c}{P} \\ \midrule
+            Threshold for P          &                        & 0.14                   &                        & 0.21                        &                        & 0.34                   &                         &  0.42                       &                        & 0.43                   \\ \midrule
+            Accuracy                  & \textbf{91.51}         & 90.77                  & \textbf{91.96}         & 90.54                       & \textbf{92.14}         & 91.08                  & \textbf{92.34}          & 91.12                       & \textbf{92.39}         & 91.09                  \\
+            Precision                 & 39.38                  & \textbf{41.37}         & \textbf{50.14}         & 44.84                       & \textbf{54.26}         & 48.09                  & \textbf{58.94}          & 48.97                       & \textbf{59.90}         & 48.86                  \\
+            Recall                    & 15.95                  & \textbf{45.05}         & 26.80                  & \textbf{54.03}              & 32.40                  & \textbf{53.82}         & 35.00                   & \textbf{55.21}              & 35.36                  & \textbf{55.70}         \\
+            F1                        & 22.70                  & \textbf{43.13}         & 34.93                  & \textbf{48.79}              & 40.57                  & \textbf{50.79}         & 43.92                   & \textbf{51.90}              & 44.47                  & \textbf{52.05}         \\ %\midrule 
+            %Avg. days to default   & 26.24                       & \textbf{31.66}                       &  59.63                      & \textbf{63.46}                            & 93.45         & \textbf{101.24}                 & 151.33         & \textbf{172.46}                      & 169.72        & \textbf{207.71}                 \\
+        \bottomrule
+        \end{tabular}
+        }
+        \label{tb:results}
+    \end{table}

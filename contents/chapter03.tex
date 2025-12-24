@@ -1,11 +1,1250 @@
 % !TeX root = ../main.tex
 
-\chapter{中文測試}
+\chapter{Algorithms}\label{chap:algorithms}
+    
+    This chapter introduces the algorithm for finding the implied barrier and its 
+    adaptations. Section~\ref{sec:algorithms-core} describes the core algorithm for 
+    finding the implied step barrier and its time complexity.
+    Section~\ref{sec:algorithms-adaptations} explains how the core algorithm can be
+    applied to barrier-option pricing. It then shows how the core algorithm can be 
+    adapted to different types of moving barriers. Finally, we discuss how to adjust 
+    the algorithm to deal with time-varying models. 
+    Section~\ref{sec:algorithms-experiments} presents the numerical results of the core 
+    algorithm and its adaptations. 
 
-\section{史記}
+\section{The Core Algorithm}\label{sec:algorithms-core}
+    
+    Our core algorithm works with a step barrier. We begin by introducing the 
+    notations and terminology used in this chapter. A step barrier consists of $m$ 
+    barrier levels for contiguous yet disjoint time intervals $(\,t_0, t_0+t_1\,]$, 
+    $(\,t_0+t_1, t_0+t_2\,]$, $\ldots$, $(\,t_0+t_{m-1}, t_0+t_m\,]$. Each barrier 
+    level is left-continuous but not right-continuous by this convention. In this 
+    chapter, we let $t_0$ represent the current time, which makes $t_0 = 0$ (see
+    Figure~\ref{fig:step_barrier}). The core algorithm works with one BTT per time 
+    interval to find the barrier levels $b_1$, $b_2$, $\ldots$, $b_m$ that give rise 
+    to the barrier-hitting probabilities $p_1$, $p_2$, \ldots, $p_m$ observed at time 
+    $t_0$ (see Figure~\ref{fig:multiple_BTT}). Specifically, $p_i$ denotes the 
+    probability of the stock price hitting the barrier on or before the monitored 
+    time point $t_0+t_i$. We assume $p_1 < p_2 < \cdots < p_m$ to avoid 
+    easy-to-handle degenerate cases and add $p_0 = 0$ for convenience.
+    
+    \begin{figure}[!t]
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                    width=0.8\textwidth,
+                    height=0.6\textwidth,
+                    xtick = {0.5,1.5,2.5,3.5,4.5,5.5},
+                    xticklabels = {$t_0$,$t_1$,$t_2$,$\ldots$,$t_{m-1}$,$t_m$},
+                    xticklabel style={text height=1.5ex, font=\large},
+                    ytick = {2.4,0.8,2},
+                    yticklabels = {$b_1$,$b_2$,$b_m$},
+                    %yticklabels = {$ $,$ $,$ $},
+                    yticklabel style={font=\large},
+                    xmin=-0.5,xmax=6,
+                    ymin=0,ymax=3.6,
+                ]
+                \addplot[line,-,domain=0.5:1.5]{2.4}; %node [midway,above] {$b_1$};
+                \addplot[line,-,domain=1.5:2.5]{0.8}; %node [midway,above] {$b_2$};
+                \node at (axis cs:3.5,1.6) {$\ldots \ldots$};
+                \addplot[line,-,domain=4.5:5.5]{2};   %node [midway,above] {$b_m$};
+                \addplot[hollow]coordinates{(0.5,2.4)(1.5,0.8)(4.5,2)};
+                \addplot[solid] coordinates{(1.5,2.4)(2.5,0.8)(5.5,2)};
+            \end{axis}
+        \end{tikzpicture}
+        \caption{A step barrier with $m$ time intervals.}
+        \label{fig:step_barrier}
+    \end{figure}
 
-\zhlipsum[name=xiangyu]
+    \begin{figure}[!t]
+        \centering
+        \resizebox{0.9\textwidth}{!}{
+            \begin{tikzpicture}[myset/.list={
+                (12,1),
+                (11,2),(13,2),(15,2),
+                (10,3),(12,3),(14,3),(16,3),
+                (9,4),(11,4),(13,4),(15,4),(17,4),
+                (3,8),(5,8),(7,8),(9,8),(11,8),(13,8),
+                (2,9),(4,9),(6,9),(8,9),(10,9),(12,9),(14,9),
+                (1,10),(3,10),(5,10),(7,10),(9,10),(11,10),(13,10),(15,10)},
+                fillset/.list={(17,4),(13,10)}, %(12,7)
+                left extended/.style={shorten <=-#1},
+                left extended/.default=1cm,
+                right extended/.style={shorten >=-#1},
+                right extended/.default=1cm]
+            \matrix (tree)[%
+                nodes in empty cells,
+                matrix of nodes,
+                nodes={anchor=center,minimum size=1cm},
+                column sep=1.5cm,
+                row sep=0.5cm,
+                ampersand replacement=\&]
+            {
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+                  \&     \&     \&     \&     \&     \&     \&     \&     \&     \\
+              $|$ \&     \&     \& $|$ \&     \&     \& $|$ \&     \&     \& $|$ \\
+            };
+            \begin{pgfonlayer}{background}
+                \draw[line width=0.5mm, left extended] (tree-17-1) -- (tree-17-4);
+                \draw[line width=0.5mm, left extended] (tree-12-5.south) -- (tree-12-7.south);
+                \draw[line width=0.5mm, left extended] (tree-13-8) -- (tree-13-10);
+                \foreach \y in {2,3,4}{
+                    \draw[dashed, left extended, right extended] (tree-9-\y) -- (tree-17-\y);
+                  }
+                \foreach \x in {9,...,17}{
+                    \draw[dashed, left extended, right extended] (tree-\x-2) -- (tree-\x-4);
+                  }
+                \foreach \y in {5,6,7}{
+                    \draw[dashed, left extended, right extended] (tree-4-\y) -- (tree-18-\y);
+                  }
+                \foreach \x in {4,...,18}{
+                    \draw[dashed, left extended, right extended] (tree-\x-5.south) -- (tree-\x-7.south);
+                  }
+                \foreach \y in {8,9,10}{
+                    \draw[dashed, left extended, right extended] (tree-1-\y) -- (tree-15-\y);
+                  }
+                \foreach \x in {1,...,15}{
+                    \draw[dashed, left extended, right extended] (tree-\x-8) -- (tree-\x-10);
+                  }
+            \end{pgfonlayer}
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (a) at (tree-6-5.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (b) at (tree-8-5.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (c) at (tree-10-5.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (d) at (tree-12-5.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (e) at (tree-14-5.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (f) at (tree-16-5.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (g) at (tree-5-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (h) at (tree-7-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (i) at (tree-9-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (j) at (tree-11-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (k) at (tree-13-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (l) at (tree-15-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (m) at (tree-17-6.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (n) at (tree-4-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (o) at (tree-6-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (p) at (tree-8-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (q) at (tree-10-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=black,font=\large,anchor=center] (r) at (tree-12-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (s) at (tree-14-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (t) at (tree-16-7.south) {};
+            \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (u) at (tree-18-7.south) {};
+            \node[below=0.5cm,font=\Huge] at (tree-19-1) {$t_0$};
+            \node[below=0.5cm,font=\Huge] at (tree-19-4) {$t_1$};
+            \node[below=0.5cm,font=\Huge] at (tree-19-7) {$t_2$};
+            \node[below=0.5cm,font=\Huge] at (tree-19-10) {$t_3$};
+            \draw[-{Latex[length=2mm]}] (tree-12-1) -- (tree-11-2); 
+            \draw[-{Latex[length=2mm]}] (tree-12-1) -- (tree-13-2); 
+            \draw[-{Latex[length=2mm]}] (tree-12-1) -- (tree-15-2); 
+            \draw[-{Latex[length=2mm]}] (tree-11-2) -- (tree-10-3); 
+            \draw[-{Latex[length=2mm]}] (tree-11-2) -- (tree-12-3); 
+            \draw[-{Latex[length=2mm]}] (tree-13-2) -- (tree-12-3); 
+            \draw[-{Latex[length=2mm]}] (tree-13-2) -- (tree-14-3); 
+            \draw[-{Latex[length=2mm]}] (tree-15-2) -- (tree-14-3); 
+            \draw[-{Latex[length=2mm]}] (tree-15-2) -- (tree-16-3); 
+            \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-9-4); 
+            \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-11-4); 
+            \draw[-{Latex[length=2mm]}] (tree-12-3) -- (tree-11-4); 
+            \draw[-{Latex[length=2mm]}] (tree-12-3) -- (tree-13-4); 
+            \draw[-{Latex[length=2mm]}] (tree-14-3) -- (tree-13-4); 
+            \draw[-{Latex[length=2mm]}] (tree-14-3) -- (tree-15-4); 
+            \draw[-{Latex[length=2mm]}] (tree-16-3) -- (tree-15-4); 
+            \draw[-{Latex[length=2mm]}] (tree-16-3) -- (tree-17-4); 
+            \draw[-{Latex[length=2mm]}] (tree-9-4) --  (a);  
+            \draw[-{Latex[length=2mm]}] (tree-9-4) --  (b);
+            \draw[-{Latex[length=2mm]}] (tree-9-4) --  (c); 
+            \draw[-{Latex[length=2mm]}] (tree-11-4) -- (b);
+            \draw[-{Latex[length=2mm]}] (tree-11-4) -- (c); 
+            \draw[-{Latex[length=2mm]}] (tree-11-4) -- (d); 
+            \draw[-{Latex[length=2mm]}] (tree-13-4) -- (c); 
+            \draw[-{Latex[length=2mm]}] (tree-13-4) -- (d); 
+            \draw[-{Latex[length=2mm]}] (tree-13-4) -- (e); 
+            \draw[-{Latex[length=2mm]}] (tree-15-4) -- (d); 
+            \draw[-{Latex[length=2mm]}] (tree-15-4) -- (e); 
+            \draw[-{Latex[length=2mm]}] (tree-15-4) -- (f); 
+            \draw[-{Latex[length=2mm]}] (a) -- (g); 
+            \draw[-{Latex[length=2mm]}] (a) -- (h); 
+            \draw[-{Latex[length=2mm]}] (b) -- (h); 
+            \draw[-{Latex[length=2mm]}] (b) -- (i); 
+            \draw[-{Latex[length=2mm]}] (c) -- (i); 
+            \draw[-{Latex[length=2mm]}] (c) -- (j); 
+            \draw[-{Latex[length=2mm]}] (d) -- (j); 
+            \draw[-{Latex[length=2mm]}] (d) -- (k); 
+            \draw[-{Latex[length=2mm]}] (e) -- (k); 
+            \draw[-{Latex[length=2mm]}] (e) -- (l); 
+            \draw[-{Latex[length=2mm]}] (f) -- (l); 
+            \draw[-{Latex[length=2mm]}] (f) -- (m); 
+            \draw[-{Latex[length=2mm]}] (g) -- (n); 
+            \draw[-{Latex[length=2mm]}] (g) -- (o); 
+            \draw[-{Latex[length=2mm]}] (h) -- (o); 
+            \draw[-{Latex[length=2mm]}] (h) -- (p); 
+            \draw[-{Latex[length=2mm]}] (i) -- (p); 
+            \draw[-{Latex[length=2mm]}] (i) -- (q); 
+            \draw[-{Latex[length=2mm]}] (j) -- (q); 
+            \draw[-{Latex[length=2mm]}] (j) -- (r); 
+            \draw[-{Latex[length=2mm]}] (k) -- (r); 
+            \draw[-{Latex[length=2mm]}] (k) -- (s); 
+            \draw[-{Latex[length=2mm]}] (l) -- (s); 
+            \draw[-{Latex[length=2mm]}] (l) -- (t); 
+            \draw[-{Latex[length=2mm]}] (m) -- (t); 
+            \draw[-{Latex[length=2mm]}] (m) -- (u); 
+            \draw[-{Latex[length=2mm]}] (n) -- (tree-3-8); 
+            \draw[-{Latex[length=2mm]}] (n) -- (tree-5-8); 
+            \draw[-{Latex[length=2mm]}] (n) -- (tree-7-8); 
+            \draw[-{Latex[length=2mm]}] (o) -- (tree-5-8); 
+            \draw[-{Latex[length=2mm]}] (o) -- (tree-7-8); 
+            \draw[-{Latex[length=2mm]}] (o) -- (tree-9-8); 
+            \draw[-{Latex[length=2mm]}] (p) -- (tree-7-8); 
+            \draw[-{Latex[length=2mm]}] (p) -- (tree-9-8); 
+            \draw[-{Latex[length=2mm]}] (p) -- (tree-11-8); 
+            \draw[-{Latex[length=2mm]}] (q) -- (tree-9-8); 
+            \draw[-{Latex[length=2mm]}] (q) -- (tree-11-8); 
+            \draw[-{Latex[length=2mm]}] (q) -- (tree-13-8); 
+            \draw[-{Latex[length=2mm]}] (tree-3-8) -- (tree-2-9); 
+            \draw[-{Latex[length=2mm]}] (tree-3-8) -- (tree-4-9); 
+            \draw[-{Latex[length=2mm]}] (tree-5-8) -- (tree-4-9); 
+            \draw[-{Latex[length=2mm]}] (tree-5-8) -- (tree-6-9); 
+            \draw[-{Latex[length=2mm]}] (tree-7-8) -- (tree-6-9); 
+            \draw[-{Latex[length=2mm]}] (tree-7-8) -- (tree-8-9); 
+            \draw[-{Latex[length=2mm]}] (tree-9-8) -- (tree-8-9); 
+            \draw[-{Latex[length=2mm]}] (tree-9-8) -- (tree-10-9); 
+            \draw[-{Latex[length=2mm]}] (tree-11-8) -- (tree-10-9); 
+            \draw[-{Latex[length=2mm]}] (tree-11-8) -- (tree-12-9); 
+            \draw[-{Latex[length=2mm]}] (tree-13-8) -- (tree-12-9); 
+            \draw[-{Latex[length=2mm]}] (tree-13-8) -- (tree-14-9); 
+            \draw[-{Latex[length=2mm]}] (tree-2-9) -- (tree-1-10); 
+            \draw[-{Latex[length=2mm]}] (tree-2-9) -- (tree-3-10); 
+            \draw[-{Latex[length=2mm]}] (tree-4-9) -- (tree-3-10); 
+            \draw[-{Latex[length=2mm]}] (tree-4-9) -- (tree-5-10); 
+            \draw[-{Latex[length=2mm]}] (tree-6-9) -- (tree-5-10); 
+            \draw[-{Latex[length=2mm]}] (tree-6-9) -- (tree-7-10); 
+            \draw[-{Latex[length=2mm]}] (tree-8-9) -- (tree-7-10); 
+            \draw[-{Latex[length=2mm]}] (tree-8-9) -- (tree-9-10); 
+            \draw[-{Latex[length=2mm]}] (tree-10-9) -- (tree-9-10); 
+            \draw[-{Latex[length=2mm]}] (tree-10-9) -- (tree-11-10); 
+            \draw[-{Latex[length=2mm]}] (tree-12-9) -- (tree-11-10); 
+            \draw[-{Latex[length=2mm]}] (tree-12-9) -- (tree-13-10); 
+            \draw[-{Latex[length=2mm]}] (tree-14-9) -- (tree-13-10); 
+            \draw[-{Latex[length=2mm]}] (tree-14-9) -- (tree-15-10); 
+            \draw (tree-19-1.mid) -- (tree-19-10.mid);
+        \end{tikzpicture}}
+        \caption{A tree with three BTTs. The BTTs cover time intervals 
+                 $(\, t_0, t_1 \,]$, $(\, t_1, t_2 \,]$, and $(\, t_2, t_3 \,]\,$.} 
+        \label{fig:multiple_BTT}
+    \end{figure}
+    
+    Assume $\Delta t$ divides $t_i - t_{i-1}$ for all $1 \leq i \leq m$. This can be
+    enforced by rounding each $t_i$ to the nearest multiple of $\Delta t$. Let
+    $n_i \equiv (t_i - t_{i-1})/\Delta t -1$ denote the number of time steps from
+    time $t_{i-1}+\Delta t$ through time $t_i$. So there are $n_i+1$ time steps in
+    time interval $(\, t_{i-1}, t_i \,]$, and $t_m-t_0$ is divided into
+    $n = \sum_{i=1}^m (n_i+1)$ time steps. Note that $n_i = O(n/m)$. For brevity,
+    assume all $n_i$s are even.
 
-\section{山海經}
+    We adopt the following terms. The \emph{survival probability at time $t_i$}, 
+    $1-p_i$, is the probability of the stock price not hitting the barrier between 
+    times $t_0$ and $t_i$. By the \emph{survival probability of a node} we mean the 
+    probability of that node being reached from the root node at time $t_0$ without 
+    ever hitting the barrier in the process. A node's 
+    \emph{time-$t$ survival probability} denotes that node's survival probability at 
+    some \emph{future} time $t$. 
+    
+    The core algorithm iterates the following two parts for $1 \leq i \leq m\,$: (1) 
+    Find the barrier level $b_i$ for the time interval $(\, t_{i-1}, t_i \,]$ that 
+    yields $1-p_i$, the survival probability at time $t_i$, and (2) propagate the 
+    survival probabilities of the nodes above the barrier level $b_{i-1}$ at time 
+    $t_{i-1}$ to the nodes above the barrier level $b_i$ at time $t_i$. The next two 
+    Subsections, \ref{sec:algorithms-core-part1} and \ref{sec:algorithms-core-part2}, 
+    address these two parts, respectively.
 
-\zhlipsum[name=nanshanjing]
+\subsection{Finding the Exact Implied Barrier Level}\label{sec:algorithms-core-part1}
+
+    We will describe part (1) of the core algorithm with reference to 
+    Figure~\ref{fig:algor_part_1}. The labels $\text{R}_0$--$\text{R}_2$ and 
+    $\text{A}_0$--$\text{A}_4$ there refer to both the nodes and their associated 
+    probabilities (to be specified later) for economy of notations. By induction, 
+    the survival probabilities of the nodes at time $t_{i-1}$ (nodes 
+    $\text{R}_0$--$\text{R}_2$) have been obtained in the previous iteration. Now 
+    grow a BTT from those nodes through time $t_i$. For efficiency's sake, this tree 
+    must not actually be built. (In contrast, what we shall call standard algorithms 
+    build trees and apply forward induction to propagate the survival probabilities 
+    node by node; they are otherwise identical to the core algorithm.) Place the 
+    middle branch of each trinomial structure (nodes $\text{A}_1$--$\text{A}_3$) so 
+    they all have the same logarithmic return of $\theta-\sigma\sqrt{\Delta t}\,$. 
+    That means $\beta = -\sigma\sqrt{\Delta t} \,$, $P_u = P_m = 0.5$, and $P_d = 0$ 
+    by formulas~(\ref{eq:pu})--(\ref{eq:pd}). Line up the lattice for the binomial 
+    structure with those nodes at time $t_{i-1}+\Delta t$ (nodes 
+    $\text{A}_0$--$\text{A}_4$). This positioning of the underlying lattice, thus 
+    the binomial structure as well, will be fine-tuned later by adjusting $\beta$. 
+    
+    \begin{figure}[!t]
+        \centering
+        \resizebox{0.9\textwidth}{!}{
+            \begin{tikzpicture}[myset/.list={%(6,1),(8,1),(10,1),
+                (3,2),(5,2),(7,2),(9,2),(11,2),
+                (2,3),(4,3),(6,3),(8,3),(10,3),(12,3),
+                (1,4),(3,4),(5,4),(7,4),(9,4),(11,4),(13,4)},
+                  left extended/.style={shorten <=-#1},
+                  left extended/.default=1cm,
+                  right extended/.style={shorten >=-#1},
+                  right extended/.default=1cm]
+          \matrix (tree) [%
+            nodes in empty cells,
+            matrix of nodes,
+            nodes={anchor=center,minimum size=0.75cm},
+            column sep=2cm,
+            row sep=0.25cm,
+            ampersand replacement=\&
+          ]
+          {
+                            \&              \& \& $\text{N}_6$  \\
+                            \&              \& \&   \\
+                            \& $\text{A}_4$ \& \& $\text{N}_5$  \\
+                            \&              \& \&   \\
+                            \& $\text{A}_3$ \& \& $\text{N}_4$  \\
+                            \&              \& \&   \\
+                            \& $\text{A}_2$ \& \& $\text{N}_3$  \\
+                            \&              \& \&   \\
+                            \& $\text{A}_1$ \& \& $\text{N}_2$  \\
+                            \&              \& \&   \\
+                            \& $\text{A}_0$ \& \& $\text{N}_1$  \\
+                            \&              \& \&   \\
+                            \&              \& \& $\text{N}_0$  \\
+                        $|$ \& $|$ \& $|$ \& $|$ \\
+          };
+          \begin{pgfonlayer}{background}
+            \foreach \y in {2,3}{
+                \draw[dashed, left extended, right extended] (tree-1-\y) -- (tree-13-\y);
+              }
+            \draw[dashed, left extended=1.23cm, right extended=1.25cm] (tree-1-4) -- (tree-13-4);
+            \foreach \x in {1,2,4,6,8,10,12,13}{
+                \draw[dashed, left extended, right extended=1.07cm] (tree-\x-2) -- (tree-\x-4);
+              }
+            \draw[dashed, left extended, right extended=1.243cm] (tree-1-2) -- (tree-1-4);
+            \draw[dashed, left extended, right extended=1.243cm] (tree-13-2) -- (tree-13-4);
+            \foreach \x in {3,5,7,9,11}{
+                \draw[dashed, left extended=1.18cm, right extended=1.235cm] (tree-\x-2) -- (tree-\x-4);
+              }
+          \end{pgfonlayer}
+          \node[below=0.5cm,font=\large] at (tree-14-1) {$t_{i-1}$};
+          \node[below=0.5cm,font=\large] at (tree-14-2) {$t_{i-1}+\Delta t$};
+          \node[below=0.5cm,font=\large] at (tree-14-3) {$t_{i-1}+2\Delta t$};
+          \node[below=0.5cm,font=\large] at (tree-14-4) {$t_i$};
+          \node[left=1cm, font=\large] at (tree-5-1.north) {$\ldots \ldots$};
+          \node[left=1cm, font=\large] at (tree-7-1.north) {$\ldots \ldots$};
+          \node[left=1cm, font=\large] at (tree-9-1.north) {$\ldots \ldots$};
+          \node[right=1cm,font=\large] at (tree-3-4.north) {$\ldots \ldots$};
+          \node[right=1cm,font=\large] at (tree-7-4.north) {$\ldots \ldots$};
+          \node[right=1cm,font=\large] at (tree-11-4.north) {$\ldots \ldots$};
+          \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (a) at (tree-5-1.north) {$\text{R}_2$};
+          \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (b) at (tree-7-1.north) {$\text{R}_1$};
+          \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] (c) at (tree-9-1.north) {$\text{R}_0$};
+          \draw[-{Latex[length=2mm]}] (a)  -- (tree-3-2)         node [pos=.1,above=1mm, font=\large] {$P_u$}; 
+          \draw[-{Latex[length=2mm]}] (a)  -- (tree-5-2)         node [pos=.25,above,font=\large] {$P_m$}; 
+          \draw[dashed,-{Latex[length=2mm]}] (a)  -- (tree-7-2)  node [pos=.1,below, font=\large] {$P_d$}; 
+          \draw[-{Latex[length=2mm]}] (b)  -- (tree-5-2)         node [pos=.1,above=1mm, font=\large] {$P_u$}; 
+          \draw[-{Latex[length=2mm]}] (b)  -- (tree-7-2)         node [pos=.25,above,font=\large] {$P_m$}; 
+          \draw[dashed,-{Latex[length=2mm]}] (b)  -- (tree-9-2)  node [pos=.1,below, font=\large] {$P_d$}; 
+          \draw[-{Latex[length=2mm]}] (c) -- (tree-7-2)          node [pos=.1,above=1mm, font=\large] {$P_u$}; 
+          \draw[-{Latex[length=2mm]}] (c) -- (tree-9-2)          node [pos=.25,above,font=\large] {$P_m$}; 
+          \draw[dashed,-{Latex[length=2mm]}] (c) -- (tree-11-2)  node [pos=.1,below, font=\large] {$P_d$}; 
+          \draw[-{Latex[length=2mm]}] (tree-3-2) -- (tree-2-3); 
+          \draw[-{Latex[length=2mm]}] (tree-3-2) -- (tree-4-3); 
+          \draw[-{Latex[length=2mm]}] (tree-5-2) -- (tree-4-3); 
+          \draw[-{Latex[length=2mm]}] (tree-5-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-10-3); 
+          \draw[-{Latex[length=2mm]}] (tree-11-2) -- (tree-10-3); 
+          \draw[-{Latex[length=2mm]}] (tree-11-2) -- (tree-12-3); 
+          \draw[-{Latex[length=2mm]}] (tree-2-3) -- (tree-1-4); 
+          \draw[-{Latex[length=2mm]}] (tree-2-3) -- (tree-3-4); 
+          \draw[-{Latex[length=2mm]}] (tree-4-3) -- (tree-3-4); 
+          \draw[-{Latex[length=2mm]}] (tree-4-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-11-4); 
+          \draw[-{Latex[length=2mm]}] (tree-12-3) -- (tree-11-4); 
+          \draw[-{Latex[length=2mm]}] (tree-12-3) -- (tree-13-4); 
+          \draw[-{Latex[length=2mm]}] (tree-14-1.mid) -- (tree-14-2.mid) ;
+          \draw[-{Latex[length=2mm]}] (tree-14-2.mid) -- (tree-14-3.mid) ;
+          \draw[-{Latex[length=2mm]}] (tree-14-3.mid) -- (tree-14-4.mid) ;
+      \end{tikzpicture}}
+        \caption{The initial BTT with $n_i = 2$. The dashed lines have zero 
+                 probabilities $P_d$.}
+        \label{fig:algor_part_1}
+    \end{figure}
+   
+    Next, perform a binary search on the tree nodes at time $t_i$ (nodes 
+    $\text{N}_0$--$\text{N}_6$) as the barrier levels. It starts with the interval 
+    spanning the lowest barrier (node $\text{N}_0$) through the upmost barrier 
+    (node $\text{N}_6$). The lowest barrier has no possibility of being hit with 
+    $P_d = 0$, while survival is impossible with the upmost barrier. They thus yield 
+    survival probabilities $0$ and $1-p_{i-1}$ at time $t_i$, respectively, which 
+    automatically bracket the target $1-p_i$ as $p_{i-1} < p_i$. The search then 
+    picks the middle node at time $t_i$ as barrier and calculates the resulting 
+    survival probability at time $t_i$ (to be described in the following paragraphs). 
+    It continues with the subinterval whose survival probabilities at time $t_i$ 
+    bracket $1-p_i$ and repeats the halving procedure. Stop when the subinterval 
+    narrows down to two \emph{adjacent} barrier levels, say $\text{N}_2$ and 
+    $\text{N}_3$. 
+
+    We return to obtaining the survival probability at time $t_i$ induced by a 
+    selected barrier level. Consider any node above the barrier at time $t_{i-1}$. 
+    Sum the time-$t_i$ survival probabilities of its three successor nodes at time 
+    $t_{i-1}+\Delta t$ weighted by the respective branching probabilities $P_u$, 
+    $P_m$, and $P_d$, and then multiply this sum by the node's survival probability.
+    Finally, add up such sums to obtain the desired survival probability at time 
+    $t_i$. For example, suppose $\text{N}_0$ is the barrier level. The survival 
+    probability at time $t_i$ equals
+    \begin{align*}
+               &\left(\text{A}_0P_d+\text{A}_1P_m+\text{A}_2P_u\right)\text{R}_0 \\
+        +\quad &\left(\text{A}_1P_d+\text{A}_2P_m+\text{A}_3P_u\right)\text{R}_1 \\
+        +\quad &\left(\text{A}_2P_d+\text{A}_3P_m+\text{A}_4P_u\right)\text{R}_2, \numberthis \label{eq:survival_prob_t_case0}
+    \end{align*}
+    where $\text{R}_0$, $\text{R}_1$, $\text{R}_2$ double as these nodes' survival 
+    probabilities, and $\text{A}_0$--$\text{A}_4$ double as these nodes' time-$t_i$ 
+    survival probabilities. We next show how to efficiently calculate (i) the 
+    time-$t_i$ survival probabilities (like $\text{A}_0$--$\text{A}_4$) and (ii) the 
+    survival probability at time $t_i$ (like 
+    formula~(\ref{eq:survival_prob_t_case0})). 
+
+    We start with task (i). Consider any node above the barrier at time 
+    $t_{i-1}+\Delta t$. Suppose this node needs to take $2 \leq \ell \leq n_i$ 
+    consecutive down moves to reach the barrier. We call the number of such moves the 
+    \emph{distance to barrier}. Note that $\ell$ is even because $n_i$ is even. In 
+    Figure~\ref{fig:bino_tri_lattice_with_barrier}, for example, node B needs 
+    $\ell = 4$ consecutive down moves to reach the barrier $L$. Consider paths 
+    starting from that node with $n_i-j$ up moves and $j$ down moves that hit the 
+    barrier. Their count is $\binom{n_i}{j-\ell}$ by substituting $u = \ell$ and 
+    $v = n_i-2j+\ell$ into formula~(\ref{eq:reflection_principle}). The 
+    time-$t_i$ survival probability of the node is 
+    \begin{equation}\label{eq:survival_probability}
+        B_\ell\quad \equiv\quad \sum_{j=0}^{\frac{n_i+\ell}{2}-1}\binom{n_i}{j}p^{n_i-j}(1-p)^j-\sum_{j=\ell}^{\frac{n_i+\ell}{2}-1}\binom{n_i}{j-\ell}p^{n_i-j}(1-p)^{j}.
+    \end{equation}
+    Set $\text{B}_0=0$. Let $G_1$ and $G_2$ be the first and second terms in 
+    formula~(\ref{eq:survival_probability}), respectively. The same formula says the 
+    time-$t_i$ survival probability of the node immediately below the above-mentioned 
+    node, whose distance to barrier is $\ell-2 \geq 0$,
+    \begin{align}
+        &\scalebox{0.9}{$
+            B_{\ell-2}\quad \equiv\quad \sum_{j=0}^{\frac{n_i+\ell-2}{2}-1}\binom{n_i}{j}p^{n_i-j}(1-p)^j - \sum_{j=\ell-2}^{\frac{n_i+\ell-2}{2}-1}\binom{n_i}{j-(\ell-2)}p^{n_i-j}(1-p)^{j}$} \notag \\[5mm]
+        &\scalebox{0.9}{$
+        =\quad \left[G_1 - \binom{n_i}{\frac{n_i+\ell}{2}-1}p^{\frac{n_i-\ell}{2}+1}(1-p)^{\frac{n_i+\ell}{2}-1}\right] - \left(\frac{p}{1-p}\right)^2\left[G_2 + \binom{n_i}{\frac{n_i-\ell}{2}}p^{\frac{n_i-\ell}{2}}(1-p)^{\frac{n_i+\ell}{2}}\right] $}. 
+       \label{eq:survival_probability_rec}
+    \end{align}
+    
+    Among the nodes that are positioned above the barrier at time $t_{i-1}+\Delta t$, 
+    not more than $n_i/2$ have time-$t_i$ survival probabilities less than $1$ 
+    because at most that many of them have a distance to barrier not exceeding $n_i$. 
+    The rest, if there are any, need no calculations because their time-$t_i$ 
+    survival probabilities equal $1$. Reserve $B_\ell = 1$ for them. Start with the 
+    node whose distance to barrier is less than, but closest to, $n_i$. This node's 
+    time-$t_i$ survival probability takes $O(n_i)$ time to compute by 
+    formula~(\ref{eq:survival_probability}). Next, apply 
+    formula~(\ref{eq:survival_probability_rec}) iteratively to obtain each of the 
+    above-mentioned $O(n_i)$ nodes' time-$t_i$ survival probabilities. Since
+    formula~(\ref{eq:survival_probability_rec}) takes $O(1)$ time to calculate with 
+    $G_1$ and $G_2$ available, it takes $O(n_i)$ time to obtain the time-$t_i$ 
+    survival probabilities of all the nodes above the barrier at time 
+    $t_{i-1}+\Delta t$. 
+
+    We now describe how task (ii), i.e., the survival probability at time $t_i$ like 
+    formula~(\ref{eq:survival_prob_t_case0}), can be efficiently calculated from 
+    the $\text{B}_\ell$s with translation invariance. We illustrate the idea with 
+    examples. First, restructure formula~(\ref{eq:survival_prob_t_case0}) as
+    \begin{align*}
+               &\left(\text{R}_0P_d\right)\text{A}_0 \\
+        +\quad &\left(\text{R}_0P_m+\text{R}_1P_d\right)\text{A}_1 \\
+        +\quad &\left(\text{R}_0P_u+\text{R}_1P_m+\text{R}_2P_d\right)\text{A}_2 \\
+        +\quad &\left(\text{R}_1P_u+\text{R}_2P_m\right)\text{A}_3 \\
+        +\quad &\left(\text{R}_2P_u\right)\text{A}_4. \numberthis \label{eq:survival_prob_t_case1}
+    \end{align*}
+    Above, $\text{A}_0$, $\text{A}_1$, $\text{A}_2$, $\text{A}_3$, and $\text{A}_4$ 
+    equal $\text{B}_2$, $\text{B}_4$, $\text{B}_6$, $\text{B}_8$, and 
+    $\text{B}_{10}$, respectively. The probabilities $\text{A}_0$--$\text{A}_4$ 
+    change as the barrier level changes. Fortunately, recalculation is unnecessary 
+    because nodes with the same distance to barrier have the same time-$t_i$ survival 
+    probability by translation invariance. For example, the time-$t_i$ survival 
+    probability of node $\text{A}_2$ with $\text{N}_2$ as the new barrier level 
+    equals that of node $\text{A}_0$ with $\text{N}_0$ as the barrier level. So if we 
+    raise the barrier from $\text{N}_0$ to $\text{N}_2$, the survival probability at 
+    time $t_i$ becomes
+    \begin{align*}
+               &\left(\text{R}_0P_u+\text{R}_1P_m+\text{R}_2P_d\right)\text{A}_2 \\
+        +\quad &\left(\text{R}_1P_u+\text{R}_2P_m\right)\text{A}_3 \\
+        +\quad &\left(\text{R}_2P_u\right)\text{A}_4. \numberthis \label{eq:survival_prob_t_case2}
+    \end{align*}
+    But now each node $\text{A}_k$ being relative to the new level $\text{N}_2$, its 
+    time-$t_i$ survival probability will take on that of $\text{A}_{k-2}$ when 
+    $\text{N}_0$ was the barrier. So the values of $\text{A}_2$, $\text{A}_3$, and 
+    $\text{A}_4$ now equal $\text{B}_2$, $\text{B}_4$, and $\text{B}_6$, 
+    respectively, instead of the earlier $\text{B}_6$, $\text{B}_8$, and 
+    $\text{B}_{10}$. It takes $O(\, \sum_{j=1}^{i-1}n_j \,)$ steps to calculate the 
+    survival probability at time $t_i$ because 
+    formulas~(\ref{eq:survival_prob_t_case1}) and (\ref{eq:survival_prob_t_case2}) 
+    have as many terms.
+
+    We summarize the running time so far. There are at most 
+    $1+\sum_{j=1}^i(n_j+2) = O(n)$ nodes above the barrier at time $t_i$. For each 
+    node proposed as barrier level, it takes $O(\, \sum_{j=1}^{i-1}n_j \,)$ steps to 
+    calculate the survival probability at time $t_i$. With the bisection method, up 
+    to $O(\text{log}\ n)$ barrier levels are considered before the two bracketing 
+    nodes are identified. Overall, the algorithm spends 
+    $O(\,\sum_{j=1}^{i-1}n_j\ \text{log}\ n\,)$ time to find the two bracketing 
+    nodes. 
+
+    There are two ways the binary search may end. First, it stops if the survival
+    probability induced by an endpoint of the subinterval as the barrier level 
+    matches $1-p_i$. In this case, the algorithm returns that barrier level. 
+    Otherwise, the subinterval is delimited strictly by two \emph{adjacent} terminal 
+    nodes, say $\text{N}_1$ and $\text{N}_2$. This subinterval brackets the desired 
+    implied barrier level within a small interval of width $2\sigma\sqrt{\Delta t}$.
+    Still, each remains at best an approximation to $b_i$. 
+
+    Surprisingly, the BTT can find the exact $b_i$ that yields the target probability 
+    $1-p_i$ by nudging the underlying lattice with the right amount: It is a simple 
+    act of solving a quadratic equation. To begin with, we know $b_i$ must lie 
+    between the bracketing nodes (nodes $\text{N}_2$ and $\text{N}_3$). This is 
+    because the survival probability at time $t_i$ is a continuous function of 
+    $\beta$ for $-\sigma \sqrt{\Delta t} \leq \beta \leq \sigma \sqrt{\Delta t}$ by 
+    formulas~(\ref{eq:pu})--(\ref{eq:pd}). It remains to position the barrier level 
+    by finding the right $\beta$ within the interval to yield a survival probability 
+    at time $t_i$ equal to $1-p_i$. Observe that all the trinomial structures share 
+    the same $\beta$ and branching probabilities because they straddle across two 
+    lattices with the \emph{same} interlinear spacing $\sigma\sqrt{\Delta t}\,$. By 
+    our initial choice of $\beta = -\sigma \sqrt{\Delta t}$, nodes $\text{A}_1$, 
+    $\text{A}_2$, and $\text{A}_3$ have logarithmic returns of 
+    $\theta - 3\sigma\sqrt{\Delta t}$, $\theta - \sigma\sqrt{\Delta t}$, and 
+    $\theta + \sigma\sqrt{\Delta t}$ on node $\text{R}_1$, respectively (the branch 
+    to node $\text{A}_1$ has zero probability, however). The same holds for the 
+    logarithmic returns of nodes $\text{A}_2$, $\text{A}_3$, and $\text{A}_4$ on node 
+    $\text{R}_2$, and so on. This implies that the survival probability at time $t_i$ 
+    is a linear function of $P_u$, $P_m$, and $P_d$, thus a quadratic function of 
+    $\beta$ by formulas~(\ref{eq:pu})--(\ref{eq:pd}). It takes $O(n_i)$ time to 
+    assemble the three coefficients of the quadratic function. Now solve the 
+    $\beta \in [\,-\sigma\sqrt{\Delta t}, \sigma\sqrt{\Delta t}\,]$ that equates the 
+    quadratic function with $1-p_i$. Because the function is concave and brackets 
+    $1-p_i$ at the two endpoints of the subinterval, it has a unique solution 
+    $\beta^*$ within range~(\ref{eq:beta_range}) as illustrated in 
+    Figure~\ref{fig:lemma1}. (Recall that we started with 
+    $\beta = -\sigma\sqrt{\Delta t}$.) The underlying grid will move up by 
+    $\beta^* + \sigma\sqrt{\Delta t}$. Finally, the algorithm returns the level of 
+    the \emph{lower} end of the final subinterval (node $\text{N}_1$) as the implied 
+    barrier level.
+
+    \begin{figure}[!t]
+        \centering
+        \includegraphics[width=0.47\textwidth]{./figures/binary1.pdf}
+        \includegraphics[width=0.47\textwidth]{./figures/binary2.pdf}
+        \caption{The default probability as a concave quadratic function of $\beta$.
+                 %The function value starts at $p_i$ and ends at $p_{i+1}$ by Lemma~\ref{lemma:identical_BTT}.
+                 The function's maximum may occur before (the left panel) or after
+                 (the right panel) $\sigma\sqrt{\Delta t}$.}
+        \label{fig:lemma1}
+    \end{figure}
+
+    In summary, iteration $i$ of part (1) takes time
+    \begin{equation*}
+        O\left[n_i + \left(\sum_{j=1}^{i-1}n_j\ \text{log}\ n\right) + n_i\right] = O\left(n_i + \sum_{j=1}^{i-1}n_j\ \text{log}\ n\right).
+    \end{equation*}
+    With $m$ iterations in total, part (1) takes time 
+    \begin{equation*}
+        O\left[\sum_{i=1}^{m}\left(n_i + \sum_{j=1}^{i-1}n_j\ \text{log}\ n\right)\right] %\\[15pt]
+        = O\left[\sum_{i=1}^m \left(\frac{n}{m} + \sum_{j=1}^{i-1}\frac{n\ \text{log}\ n}{m}\right)\right] %\\[15pt]
+        = O\left(mn\ \text{log}\ n\right). 
+    \end{equation*}
+    This time bound can be reduced to $O\left[\,mn\ \text{log}\ (n/m)\,\right]$ by
+    recalling that $\text{B}_\ell = 1$ for $\ell > n_i\,$, which simplifies the 
+    overwhelming majority of the terms in formula~(\ref{eq:survival_prob_t_case1}). 
+    But as $m$ is a constant, this improvement is not pursued further.
+
+\subsection{Propagating the Survival Probabilities}\label{sec:algorithms-core-part2}
+
+    Part (2) obtains the survival probability of every node above $b_i$ at time $t_i$ 
+    from those above $b_{i-1}$ at time $t_{i-1}$. We shall accomplish this task 
+    efficiently with the combinatorics and FFT. 
+
+    The first step obtains the survival probabilities of the nodes above $b_i$ at 
+    $t_{i-1}+\Delta t$. This is easily done by summing the contributions from the 
+    survival probabilities of its predecessor nodes at time $t_{i-1}$ weighted by 
+    $P_u$, $P_m$, and $P_d$. For example, the survival probability of node 
+    $\text{A}_2$ in Figure~\ref{fig:algor_part_1} is
+    \begin{equation*}
+        \text{R}_0 P_u+\text{R}_1 P_m+\text{R}_2 P_d.
+    \end{equation*}
+    Let $k_i$ denote the number of nodes \emph{above} $b_i$ at time 
+    $t_{i-1}+\Delta t$. Name the survival probabilities of these nodes from the top 
+    down $q_{k_i-1}, q_{k_i-2}, \ldots, q_0$. Ignore the barrier $b_i$ for the time 
+    being. Since the binomial structure has $n_i$ steps, each node at time 
+    $t_{i-1}+\Delta t$ will reach those at time $t_i$ with the binomial distribution 
+    $B(n_i, p)$. In totality, those $k_i$ nodes will reach $k_i+n_i$ nodes at time 
+    $t_i$. Call the survival probabilities of these nodes $N_{k_i + n_i - 1}$, 
+    $N_{k_i + n_i - 2}$, $\ldots$, $N_{0}$, again from the top down. They equal, 
+    respectively,
+    \begin{equation}
+        q_{k_i-1}c_{n_i},\ q_{k_i-1}c_{n_i-1}+q_{k_i-2}c_{n_i},\ q_{k_i-1}c_{n_i-2}+q_{k_i-2}c_{n_i-1}+q_{k_i-3}c_{n_i},\ \ldots,\ q_0c_0,
+        \label{eq:survival_prob_ti}
+    \end{equation}
+    where $c_j \equiv \binom{n_i}{j}p^j(1-p)^{n_i-j}, j=0,1,\ldots,n_i$. Clearly, 
+    $N_j$ is the coefficient of $x^j$ in 
+    \begin{equation}
+        \left(q_{k_i-1}x^{k_i-1} + q_{k_i-2}x^{k_i-2} + \cdots + q_0\right)\left(c_{n_i}x^{n_i} + c_{n_i-1}x^{n_i-1} + \cdots + c_0\right)
+        \label{eq:polynomial_multiplication}
+    \end{equation}
+    for $0 \leq j \leq k_i+n_i-1$. This polynomial multiplication can be performed 
+    in time $O(k_i\ \text{log}\ n_i)$ by the FFT (see~\cite{Algo}). This running time 
+    simplifies to $O(n\ \text{log}\ n_i)$ as $k_i \leq n$.
+ 
+    Now introduce the barrier $b_i$. The survival 
+    probabilities~(\ref{eq:survival_prob_ti}) need to be lowered to reflect the 
+    presence of the barrier. We will calculate the probability of hitting the barrier 
+    for each of the $k_i+n_i$ nodes at time $t_i$ and then subtract it from that 
+    node's survival probability given in~(\ref{eq:survival_prob_ti}). We explain the 
+    ideas with reference to Figure~\ref{fig:algor_part_2}. First, reflect those $k_i$ 
+    nodes at time $t_{i-1}+\Delta t$ over the barrier to obtain a \emph{reflected} 
+    binomial structure. In Figure~\ref{fig:algor_part_2}, the reflected binomial 
+    structure emanates from nodes $\text{A}_0'$, $\text{A}_1'$, and $\text{A}_2'$, 
+    which start with the same survival probabilities as nodes $\text{A}_0$, 
+    $\text{A}_1$, and $\text{A}_2$, respectively. Apply the same polynomial 
+    multiplication~(\ref{eq:polynomial_multiplication}) to the reflected binomial 
+    structure to obtain the probabilities of reaching its nodes at time $t_i$. By 
+    the reflection principle, these probabilities are the desired probabilities if 
+    the following adjustment is made \emph{before} the 
+    multiplication~(\ref{eq:polynomial_multiplication}) commences. Consider any path 
+    starting from a node above the barrier at time $t_{i-1}+\Delta t$ (one of the 
+    nodes $\text{A}_0$--$\text{A}_2$). Let $\ell$ be this node's distance to barrier. 
+    The up moves and down moves in the reflected path are reversed before the 
+    $x$-axis is hit (recall Figure~\ref{fig:reflection_principle}). That means the 
+    survival probability of each of these $k_i$ nodes in the reflected binomial 
+    structure (nodes $\text{A}_0'$--$\text{A}_2'$) needs to be multiplied by 
+    $[\, (1-p)/p\, ]^\ell$ before the polynomials are multiplied. The resulting 
+    probabilities of the nodes above the barrier at time $t_i$ are then subtracted 
+    from the corresponding probabilities in~(\ref{eq:survival_prob_ti}). This step 
+    also costs $O(n\ \text{log}\ n_i)$ time with the FFT\@. 
+
+    \begin{figure}[!t]
+        \centering
+        \resizebox{0.65\textwidth}{!}{
+            \begin{tikzpicture}
+                [very_big_circles/.list={%(10,1),(12,1),(14,1),
+                (7,2),(15,2),
+                (6,3),(8,3),(10,3),(12,3),(14,3),(16,3),
+                (5,4),(7,4),(9,4),(11,4),(13,4),(15,4),(17,4),
+                (4,5),(6,5),(8,5),(10,5),(12,5),(14,5),(16,5),(18,5),
+                (3,6),(5,6),(7,6),(9,6),(11,6),(13,6),(15,6),(17,6),(19,6),
+                (2,7),(4,7),(6,7),(8,7),(10,7),(12,7),(14,7),(16,7),(18,7),(20,7),
+                (1,8),(3,8),(5,8),(7,8),(9,8),(11,8),(13,8),(15,8),(17,8),(19,8),(21,8),
+                (18,3),(20,3),(22,3),
+                (19,4),(21,4),(23,4),
+                (20,5),(22,5),(24,5),
+                (21,6),(23,6),(25,6),
+                (22,7),(24,7),(26,7),
+                (23,8),(25,8),(27,8)},
+                very_big_circles/.list={(9,2),(11,2),(13,2),(17,2),(19,2),(21,2)},
+                left extended/.style={shorten <=-#1},
+                left extended/.default=1cm,
+                right extended/.style={shorten >=-#1},
+                right extended/.default=1cm]
+                \matrix (tree) [nodes in empty cells,
+                    matrix of nodes,
+                    nodes={anchor=center,minimum size=0.75cm},
+                    column sep=2cm,
+                    row sep=0.25cm,
+                    ampersand replacement=\&]{
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\ 
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  $\text{A}_2$ \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  $\text{A}_1$ \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  $\text{A}_0$ \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\ 
+                    \&  $\text{A}_0'$\&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  $\text{A}_1'$\&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  $\text{A}_2'$\&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    \&  \&  \& \& \& \& \& \\
+                    $|$  \& $|$ \& \& \& \& \& \& $|$\\
+                };
+            \begin{pgfonlayer}{background}
+                \draw[dashed, left extended=1.7cm, right extended=1.7cm] (tree-1-8) -- (tree-27-8);
+                \foreach \y in {2,...,7}{
+                    \draw[dashed, left extended=1.25cm, right extended=1.25cm] (tree-1-\y) -- (tree-27-\y);}
+                \foreach \x in {2,4,6,8,10,12,14,16,18,20,22,24,26}{
+                    \draw[dashed, left extended=1.3cm, right extended=1.3cm] (tree-\x-2) -- (tree-\x-8);}
+                \foreach \x in {7,9,11,13,15}{
+                    \draw[dashed, left extended=1.7cm, right extended=1.7cm] (tree-\x-2) -- (tree-\x-8);}
+                \foreach \x in {1,3,5,23,25,27}{
+                    \draw[dashed, left extended=1.3cm, right extended=1.7cm] (tree-\x-2) -- (tree-\x-8);}
+                \foreach \x in {17,19,21}{
+                    \draw[dashed, left extended=1.9cm, right extended=1.8cm] (tree-\x-2) -- (tree-\x-8);}
+                \draw[line width=1.5mm, left extended] (tree-15-1) -- (tree-15-8) node [right=1cm,font=\YUGE] {$b_i$};
+                \draw[fill=black,thick,opacity=0.1] (tree-3-8.mid) -- (tree-9-2.mid) -- (tree-13-2.mid) -- (tree-19-8.mid) -- cycle ;
+                \draw[fill=black,thick,opacity=0.5] (tree-11-8.mid) -- (tree-17-2.mid) -- (tree-21-2.mid) -- (tree-27-8.mid) -- cycle ;
+            \end{pgfonlayer}
+            \draw[-] (tree-28-1.mid) -- (tree-28-8.mid);
+            \node[below=0.5cm,font=\YUGE] at (tree-28-1) {$t_{i-1}$};
+            \node[below=0.5cm,font=\YUGE] at (tree-28-2.east) {$t_{i-1}+\Delta t$};
+            \node[below=0.5cm,font=\YUGE] at (tree-28-8) {$t_{i}$};
+        \end{tikzpicture}}
+        \caption{The reflected binomial structure. Above, the 
+                 light gray area contains the binomial structure 
+                 emanating from the $k_i$ nodes 
+                 above the barrier at time $t_{i-1}+\Delta t$.
+                 Here, $k_i = 3$. The dark gray area contains the 
+                 binomial structure emanating from these
+                 $k_i$ nodes' reflected counterparts. The 
+                 branches of the binomial structures are not 
+                 shown.}
+        \label{fig:algor_part_2}
+    \end{figure}
+
+    In summary, each iteration of part (2) takes time
+    \begin{equation*}
+        O\left(n\ \text{log}\ n_i + n\ \text{log}\ n_i\right) = O\left(n\ \text{log}\ n_i\right) = O\left(n\ \text{log}\ \frac{n}{m}\right).
+    \end{equation*}
+    With $m$ iterations in total, part (2) takes time 
+    \begin{equation*}
+        O\left(mn\ \text{log}\ \frac{n}{m}\right).
+    \end{equation*}
+    The pseudo code appears in Algorithm~\ref{alg:core}.
+
+    \begin{algorithm}
+        \caption{The core algorithm}\label{alg:core}
+        \textbf{Input}: $\mu$, $\sigma$, $p_1, p_2, \ldots, p_m$, $t_0, t_1, t_2, \ldots, t_m$, $n$. \\
+        \textbf{Output}: The implied barrier levels $b_1,b_2,\ldots,b_m$ on the tree that reproduce $p_1,p_2,\ldots,p_m$.
+        \begin{algorithmic}[1]
+            \State $\Delta t \gets t_m/n$
+            \State $t_i \gets \Delta t \times \text{round}(t_i/\Delta t)$ for $i=1,2,\ldots,m-1$
+            \For{$i \gets 1$ to $m$}
+                \State $n_i \gets [\,(t_i - t_{i-1})/\Delta t\,] - 1$                          \Comment{Assume $n_i$ is even below for brevity}
+                \State Position the initial lattice with $\beta=-\sigma\sqrt{\Delta t}$   \Comment{Part (1) starts here}
+                \State $\text{B}_\ell \gets \sum_{j=0}^{\frac{n_i+\ell}{2}-1}\binom{n_i}{j}p^{n_i-j}(1-p)^j-\sum_{j=\ell}^{\frac{n_i+\ell}{2}-1}\binom{n_i}{j-\ell}p^{n_i-j}(1-p)^{j}$ for $\ell=2,4,\ldots,n_i$
+                \State $\text{B}_0 \gets 0$                                     \Comment{$\text{B}_\ell=1$ for $\ell > n_i$ if accessed}
+                \State L $\gets$ the lowest node at time $t_i$ reachable from nodes above $b_{i-1}$ at time $t_{i-1}$
+                \State U $\gets$ the upmost node at time $t_i$ reachable from nodes above $b_{i-1}$ at time $t_{i-1}$
+                \State $v_\text{L} \gets 1$ ; $v_\text{U} \gets 0$
+                \While{L and U are not adjacent}
+                    \State M $\gets$ the median node at time $t_i$ between L and U
+                    \State $k_i \gets$ the number of nodes above M at time $t_{i-1}+\Delta t$ 
+                    \State Let $q_{k_i-1}, q_{k_i-2}, \ldots, q_0$ be the survival probabilities of these $k_i$ nodes from the top down
+                    \State Let $\ell_{k_i-1}, \ell_{k_i-2}, \ldots, \ell_0$ be these nodes' distances to barrier M 
+                    \State $v_\text{M} \gets \sum_{j=0}^{k_i-1}q_jB_{\ell_j}$
+                    \If{ $v_\text{U} < 1-p_i$ and $v_\text{M} \geq 1-p_i$}
+                        \State L $\gets$ M ; $v_\text{L} \gets v_\text{M}$
+                    \Else
+                        \State U $\gets$ M ; $v_\text{U} \gets v_\text{M}$
+                    \EndIf
+                \EndWhile
+                \State Solve the quadratic function of $\beta$ for the survival probability that equates $1-p_i$
+                \State $b_i \gets$ $e^{\beta}\ \times\,$ the stock price of node L
+                \State $k_i \gets$ the number of nodes above $b_i$ at time $t_{i-1}+\Delta t$  \Comment{Part (2) starts here}
+                \State Let $q_{k_i-1}, q_{k_i-2}, \ldots, q_0$ be the survival probabilities of these $k_i$ nodes from the top down
+                \State Let $\ell_{k_i-1}, \ell_{k_i-2}, \ldots, \ell_0$ be these nodes' distances to barrier $b_i$
+                \State $c_j \gets \binom{n_i}{j}p^j(1-p)^{n_i-j}$ for $j=0,1,\ldots,n_i$
+                \State Let $\sum_{j=0}^{k_i+n_i-1}N_{j}x^j = \left(\sum_{j=0}^{k_i-1}q_jx^j\right)\left(\sum_{j=0}^{n_i}c_jx^j\right)$ 
+                \State $s_j \gets \left[\,(1-p)/p\,\right]^{\ell_{k_i-1}} q_j$ for $j=0,1,\ldots,k_i-1$
+                \State Let $\sum_{j=0}^{k_i+n_i-1}N_{j}'x^j = \left(\sum_{j=0}^{k_i-1}s_{k_i-1-j}x^j\right)\left(\sum_{j=0}^{n_i}c_jx^j\right)$ 
+                \State $N_j \gets N_j - N_{k_i+\ell_0+j-1}'$ for $j=0,1,\ldots,n_i-\ell_0$
+            \EndFor
+        \end{algorithmic}
+    \end{algorithm}
+
+\section{Adaptations of the Core Algorithm}\label{sec:algorithms-adaptations}
+
+    Although the core algorithm is to find the implied step barrier, it can be easily 
+    specialized to handle other kinds of moving barriers. Moreover, the resulting 
+    algorithms become pricing algorithms for options with such barriers after 
+    switching to the risk-neutral measure and making minor changes. The above results 
+    continue to hold when the growth rate and volatility are time varying.
+
+\subsection{Barrier Options Pricing}\label{subsec:algorithms-adaptation-pricing}
+
+    To price step-barrier options, drop part (1) of the core algorithm, which is
+    about finding the implied barrier, thus irrelevant here. Instead, run part (2) to
+    calculate the survival probabilities for the terminal nodes, but under the
+    measure $Q$, meaning $\mu = r$. Then evaluate the 
+    expectation~(\ref{eq:risk_neutral}) by summing the terminal nodes' survival 
+    probability-weighted payoffs before discounting the sum, which only takes $O(n)$ 
+    time. In total, the running time equals that of part (2) of the core algorithm, 
+    $O(mn\ \text{log}\ (n/m))$. This $O(n/\text{log}n)$ improvement over the standard 
+    algorithm's $O(n^2)$ is dramatic. 
+
+\subsection{Barriers: The Discrete Case}\label{subsec:algorithms-adaptation-discrete}
+
+    Discrete barriers are monitored at discrete time points. The barrier levels need 
+    not be identical. The core algorithm can be simplified to find the implied 
+    discrete barrier as follows. Because there is no barrier within time 
+    interval $(\, t_{i-1}, t_i \,)$ any more, the reflection principle is not needed, 
+    and formula~(\ref{eq:survival_probability}) is reduced to its first term $G_1$. 
+    As a result, formula~(\ref{eq:survival_probability_rec}) simplifies to
+    \begin{equation*}
+        B_{\ell-2} \quad\equiv\quad G_1 - \binom{n_i}{\frac{n_i+\ell}{2}-1}p^{\frac{n_i-\ell}{2}+1}(1-p)^{\frac{n_i+\ell}{2}-1}.
+    \end{equation*}
+    Part (2) now stops at formula~(\ref{eq:polynomial_multiplication}), omitting the 
+    subsequent subtractions to account for the barrier \emph{within} the time 
+    interval. The running time therefore remains the same at $O(mn\ \text{log}\ n)$. 
+    To price discrete-barrier options, simply follow the idea at the end of
+    Subsection~\ref{subsec:algorithms-adaptation-pricing} with the same running time 
+    $O(mn\ \text{log}\ (n/m))$.
+
+\subsection{Barriers: The General Case}\label{subsec:algorithms-adaptation-general}
+    
+    Suppose the moving barrier alternates between a time interval with a continuously 
+    monitored constant barrier level and a time interval with a discretely monitored 
+    barrier at the end of it. This setup subsumes the partial and window barriers 
+    (see Figure~\ref{fig:barriers}). To find the implied barrier, simply alternate 
+    between the core algorithm and the algorithm in 
+    Subsection~\ref{subsec:algorithms-adaptation-discrete} with the same running time 
+    $O(mn\ \text{log}\ n)$. Similarly, such options can be priced in 
+    $O(mn\ \text{log}\ (n/m))$ time.
+
+    For a continuously monitored general moving barrier $b(t)$, the algorithm to find 
+    the implied barrier again adopts the core algorithm. But it grows only the 
+    trinomial structure of the BTT out of every tree nodes, without the ensuing 
+    binomial part (hence $n_i = 0$ for all $i$). This results in a trinomial tree. 
+    The running times are $O(n^2\ \text{log}\ n)$ for finding the implied barrier --- 
+    because the tree has $O(n^2)$ nodes and the bisection method needs 
+    $O(\text{log}\ n)$ iterations --- and $O(n^2)$ for pricing the moving-barrier 
+    options.
+
+\subsection{Time-Varying Models}\label{subsec:algorithms-adaptation-tvaring}
+
+    So far, our algorithms assumed a constant growth rate $\mu$ and volatility 
+    $\sigma$. When the growth rate $\mu(t)$ and volatility $\sigma(t) > 0$ are time 
+    varying, the algorithms for handling continuously monitored moving 
+    barriers are the same except for one simple change: The spacing between two 
+    vertically adjacent nodes is set to $\sigma'\sqrt{\Delta t}$, where $\sigma'$ is 
+    any upper bound on the volatility function between times $t_0$ and $t_m$. As a 
+    result, for the nodes residing at time $t$, 
+    formulas~(\ref{eq:alpha})--(\ref{eq:gamma}) become
+    \begin{align*}
+        \alpha\quad &\equiv\quad \beta + \sigma' \sqrt{\Delta t}, \\
+        \beta\quad &\equiv\quad \hat{\theta} - \theta(t), \\
+        \gamma\quad &\equiv\quad \beta - \sigma' \sqrt{\Delta t},
+    \end{align*}
+    where $\theta(t) \equiv [\,\mu(t)-\sigma^2(t)/2\,]\,\Delta t$. 
+    Equation~(\ref{eq:variance}) becomes
+    \begin{equation*}
+        P_u\alpha^2 + P_m\beta^2 + P_d\gamma^2 = \sigma^2(t)\,\Delta t.
+    \end{equation*}
+    The branching probabilities are guaranteed to be valid for $\Delta t$ suitably 
+    small (see~\cite{Lok2020}). For pricing, $\theta(t)$ is replaced by $r(t)$, the
+    time-varying risk-free interest rate. The running time is again 
+    $O(n^2\ \text{log}\ n)$ for finding the exact implied general moving barrier and 
+    $O(n^2)$ for pricing moving-barrier options.
+
+\section{Numerical Results}\label{sec:algorithms-experiments}
+
+    This section provides the numerical results on obtaining the exact implied 
+    barriers and pricing barrier options for various barrier types. We consider 
+    constant barriers, step barriers, discrete barriers, and partial barriers. 
+    Running times are based on an Amazon EC2 c6g.medium instance. All programs are 
+    written in Python using the NumPy package.
+
+\subsection{Exact Implied Barriers}
+        
+    The core algorithm produces an exact implied barrier for all $n$. Although 
+    different $n$s yield different implied barriers, their differences from the true 
+    barrier are minuscule even for very small $n$s in typical cases. The initial 
+    stock price is one dollar in this subsection. We first illustrate this with the 
+    constant-barrier case, which is treated as a subcase of the step barrier. Given 
+    a constant barrier level, the barrier-hitting probability has a well-known 
+    formula (see~\cite{Ingersoll1987}). The solid lines in Figure~\ref{fig:exact_ib} 
+    plot the exact implied barriers found by the core algorithm for five different 
+    true barrier levels (dotted lines), unknown to the algorithm of course. The exact 
+    implied barriers converge quickly and monotonically to the true barrier as $n$ 
+    increases. Take the 3rd exhibit for example. The true barrier level is 0.85, 
+    and the resulting barrier-hitting probability is 0.424910. The absolute errors 
+    start at 0.014 (or $1.647\%$ of the true barrier) for $n = 1$ and decrease 
+    smoothly toward zero as $n$ increases. They are less than 0.001 (or $0.133\%$ of 
+    the true barrier) for $n \geq 43$. The dashed lines with markers in 
+    Figure~\ref{fig:exact_ib} reveal that extrapolating the implied barrier levels 
+    from those of $n$ and $2n+1$ reduces the errors even further 
+    (see~\cite{Atkinson1989}). Now they start at 0.003 (or within $0.353\%$ of the 
+    true barrier) using $n = 1$ and $n = 3$ and never exceed 0.001 (or within 
+    $0.118\%$ of the true barrier) when $n \geq 5$. 
+    
+    \begin{figure}[!t]
+        \centering
+        \includegraphics[width = \textwidth]{figures/exact_implied_barrier_0.9999.pdf}
+        \includegraphics[width = \textwidth]{figures/exact_implied_barrier_0.95.pdf}
+        \includegraphics[width = \textwidth]{figures/exact_implied_barrier_0.85.pdf}
+        \includegraphics[width = \textwidth]{figures/exact_implied_barrier_0.75.pdf}
+        \includegraphics[width = \textwidth]{figures/exact_implied_barrier_0.35.pdf}
+        \caption{The solid lines are the implied barriers from the core algorithm 
+                 for $n = 1,3,5,\ldots,101$ at five different true barrier levels 
+                 (dotted lines). The current stock price is $1$ dollar, the growth 
+                 rate is $10\%$, the volatility is $25\%$, the horizon is $1$ year. 
+                 The dashed lines with markers are the extrapolated implied barriers 
+                 using $n$ and $2n+1$.}
+         \label{fig:exact_ib}
+    \end{figure}
+
+    We make two observations about Figure~\ref{fig:exact_ib}. First, in the 
+    continuous-time model, the barrier must stay below the current stock price for 
+    any non-zero survival probability. But our exact implied barrier might violate 
+    that when the true barrier is lower than, but very close to, the current stock 
+    price, in which case the barrier-hitting probability is very close to $1$. For 
+    example, the first exhibit depicts such a barrier-too-close situation to the 
+    extreme: The true barrier level 0.9999 is merely 0.0001 below the current stock 
+    price 1. The exact implied barrier is found to be 1.355 with a huge relative 
+    error of $35.514\%$. But it quickly drops to 1.171 for $n = 3$ and 1.079 after 
+    extrapolation using $n = 1$ and $n = 3$. Second, when the true barrier is so low 
+    that the resulting barrier-hitting probability is too negligible to encounter in 
+    reality, our exact implied barrier may deviate significantly from the true 
+    barrier at small $n$s. For example, the implied barrier is far from the true 
+    barrier level $0.35$ for small $n$s in the fifth exhibit, where the 
+    barrier-hitting probability is \num{8.15219e-6}. To address it, one can raise $n$ 
+    suitably or apply extrapolation. For example, the relative error is only 
+    $1.790\%$ for $n = 51$ and $0.309\%$ after extrapolation using $n = 25$ and 
+    $n = 51$. For typical barrier-hitting probabilities such as the middle three 
+    exhibits, even $n = 1$ works surprisingly well. We remark that extrapolation will 
+    not be applied for the remaining experiments unless explicitly stated.
+    
+    The literature does not offer true step-barrier option prices for the interesting 
+    case of large numbers of barrier levels. We therefore consider $m = 60$ 
+    \emph{identical} month-long barrier levels for a step barrier. The $m$ 
+    barrier-hitting probabilities are generated from the well-known formula. Finally, 
+    we run the core algorithm, which does not know it is dealt a constant-barrier 
+    case, on these probabilities to obtain the exact implied step barrier. The result 
+    appears in Figure~\ref{fig:step_barrier_convergence}. Both the left and right 
+    panels plot the exact implied barrier for $n = 180, 780, 1980, 6060$. The true 
+    barrier is 0.85 for 5 years in the left panel and 0.9999 for 5 years in the right 
+    panel. In both settings, the exact implied barrier converges to the true barrier 
+    as $n$ increases. 
+    
+    \begin{figure}[!t]
+    \centering
+        \includegraphics[width = 0.485\textwidth]{figures/experiment_step_barrier_convergence_85.pdf}
+        %\includegraphics[width = 0.505\textwidth]{figures/experiment_maximum_error_0.85.pdf}
+        \includegraphics[width = 0.485\textwidth]{figures/experiment_step_barrier_convergence_9999.pdf}
+        %\includegraphics[width = 0.505\textwidth]{figures/experiment_maximum_error_0.9999.pdf}
+        \caption{The exact implied step barriers by the core algorithm.
+                 %and their 
+                 %maximum errors. The maximum errors are plotted in log scale. 
+                 The parameters are the same as those in Figure~\ref{fig:exact_ib}. 
+                 The true barriers for the left and right exhibits are 0.85 and 0.9999, 
+                 respectively.}
+        \label{fig:step_barrier_convergence}
+    \end{figure}
+
+    We next apply the core algorithm to real-world data. The term structures of 
+    default probabilities (our cumulative barrier-hitting probabilities $p_i$) up to 
+    60 months, annual growth rates ($\mu$), and volatilities of asset returns 
+    ($\sigma$) are provided by the Credit Research Initiative (CRI) of the National 
+    University of Singapore.\footnote{The CRI Dataset, the Credit Research 
+    Initiative of the National University of Singapore. We access the dataset on
+    08-17-2023.} The left exhibit of Figure~\ref{fig:pd_ib} plots the default 
+    probabilities for Freddie Mac and Fannie Mae as of February 2008. The $x$-axis 
+    represents the number of forward months, and the $y$-axis denotes the default 
+    probability. For example, Freddie Mac (Fannie Mae) has a 40\% (8\%, respectively) 
+    chance of defaulting within the next 10 months. The annual growth rate and 
+    volatility of the asset return of Freddie Mac (Fannie Mae) are $-$1.91\% (0.68\%, 
+    respectively) and 53.72\% (9.63\%, respectively).
+    
+    \begin{figure}[!t]
+    \centering
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_default_prob.pdf}
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_implied_barrier.pdf}
+        \caption{Term structures of default probabilities and exact implied step barriers 
+                 of Freddie Mac and Fannie Mae as of February 2008. The implied step 
+                 barriers are calculated for $n = 1500$.} 
+        \label{fig:pd_ib}
+    \end{figure}
+    
+    The right exhibit of Figure~\ref{fig:pd_ib} plots the implied step barriers found 
+    by the core algorithm. Both are downward sloping. Table~\ref{tb:ib_time_24} 
+    tabulates the running times of finding the implied step barrier of Freddie Mac by 
+    the core algorithm and the standard algorithm for $780 \leq n \leq 36060$ (in 
+    increments of 120). Note that $m = 60$ with the CRI dataset and $n_i = n/m$ for 
+    $i = 1,2,\ldots,60$. The running times of the core algorithm never exceed $11$ 
+    seconds. They are also indistinguishable from a linear growth. 
+    %(Chapter~\ref{chap:convergence} will prove that the implied constant barrier 
+    %converges at a rate of $O(n^{-1})$.) 
+    On the other hand, the standard algorithm takes 3.11 seconds at $n = 780$ and 
+    more than two thousands seconds at $n = 36060$. Speedup is defined as the ratio 
+    of the running of our core algorithm to that of the standard algorithm 
+    (see~\cite{Jaja1992}). The speedups range from 8.59 to 237.39. The core algorithm 
+    is obviously much more viable for large portfolios and datasets.
+
+    \begin{table}[!t]
+        \centering
+        \caption{Running times (in seconds) of finding the implied barrier of Freddie 
+                 Mac by the core algorithm and speedups over the standard algorithm.}
+        \begin{tabular}{rrrr}
+        \specialrule{.1em}{.05em}{.05em}
+            $n$   & Core  algorithm & Standard  algorithm & Speedup \\ \midrule
+            780   & 0.36           &               3.11  &   8.59  \\
+            1500  & 0.62           &               7.76  &  12.55  \\
+            2340  & 0.89           &              15.90  &  17.87  \\
+            3180  & 1.15           &              26.61  &  23.19  \\
+            4500  & 1.50           &              49.78  &  33.10  \\
+            6060  & 2.02           &              82.84  &  40.92  \\
+            9060  & 3.02           &             179.33  &  59.30  \\
+            12060 & 3.82           &             307.59  &  80.51  \\
+            18060 & 5.56           &             663.41  & 119.29  \\
+            24060 & 7.09           &            1160.80  & 163.66  \\ 
+            30060 & 9.02           &            1784.62  & 197.81  \\           
+            36060 & 10.92          &            2592.52  & 237.39  \\ \specialrule{.1em}{.05em}{.05em}          
+        \end{tabular}
+        \label{tb:ib_time_24}
+    \end{table}
+        
+\subsection{Barrier Options Pricing}
+    
+    Our pricing algorithms are fast and have excellent convergence. 
+    Figure~\ref{fig:single_barrier_option_pricing} confirms it with a 
+    constant-barrier DOC. As $n$ increases from 201 to 1,401 by increments of 2, the 
+    prices converge to 5.9968 given by Merton's (1974) formula. The absolute errors 
+    are at most 0.001. Figure~\ref{fig:step_barrier_option_pricing} covers the case 
+    of a step-barrier DOC. The unbiased and highly efficient 
+    Brownian-bridge method of \cite{Shevchenko2003} with 10 million paths gives a 
+    mean of 6.241 and a standard error of 0.004. Our algorithm's prices never deviate 
+    from that by more than 0.02. The speedups over the standard algorithm range 
+    from 11.55 to 48.67 for $603 \leq n \leq 4203$ (in increments of 6). 
+    %Recall that the standard algorithm works on a tree node by node. The running time 
+    %improvement, $O(n/\text{log}n)$, is practically indistinguishable from $O(n)$. 
+        
+    \begin{figure}[!t]
+        \centering
+        \includegraphics[width = 0.6\textwidth]{figures/experiment_single_barrier_option_pricing.pdf}
+        \caption{Convergence in pricing a constant-barrier DOC by our algorithm. The 
+                 initial stock price is 95, the strike price is 100, the 
+                 risk-free interest rate is $10\%$, the volatility is $25\%$, the 
+                 time to maturity is 1 year, and the barrier is 90. The true price 
+                 is 5.9968 (dotted line).}
+        \label{fig:single_barrier_option_pricing}
+    \end{figure}
+    
+    \begin{figure}[!t]
+    \centering
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_step_barrier_option_pricing.pdf}
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_step_barrier_option_pricing_speedup.pdf}
+        \caption{Convergence and speedups in pricing a step-barrier DOC by our 
+                 algorithm. The barrier function is 90 followed by 80 followed 
+                 by 90 with equal durations. The rest of the parameters are the 
+                 same as those in Figure~\ref{fig:single_barrier_option_pricing}.
+                 The left exhibit plots the convergence of our algorithm. The 
+                 Brownian-bridge method produces a very tight 95\% confidence 
+                 interval (CI) of $[\, 6.233, 6.249 \,]$ (dotted lines). The right 
+                 exhibit plots the speedups of our algorithm over the standard 
+                 algorithm.}
+        \label{fig:step_barrier_option_pricing}
+    \end{figure}
+
+    We next price discrete DOCs at different constant barrier levels with an initial 
+    stock price of 100. Our algorithm with extrapolation is compared with the 
+    approximation formula of \cite{Broadie1997}. When $m = 50$ monitoring points, our 
+    relative errors are never more than $2.147\%$. The formula in comparison produces 
+    smaller relative errors than ours except when the barrier is 99 (see 
+    Table~\ref{tb:discrete_price}). Figure~\ref{fig:discrete_barrier_option_pricing}
+    illustrates the convergence and speedups of our algorithm over the standard 
+    algorithm. The speedups trend roughly from 20 to 70 for $5250 \leq n \leq 25250$. 
+    Table~\ref{tb:discrete_price2} provides the option prices with 
+    $m = 5\ \text{and}\ 25$. The absolute relative errors of our algorithm stay below 
+    $2.170\%$ whereas the formula's reach $4.977\%$ when $m = 25$ and $9.779\%$ when 
+    $m = 5$. In general, the formula's performance seems to degrade as the number of 
+    monitoring points decreases or as the barrier approaches the initial stock price. 
+    Table~\ref{tb:discrete_price3} compares the results under different volatilities, 
+    times to maturities, and strike prices. As before, the formula's relative errors 
+    jump upward when the barrier is close to the initial stock price. Its relative 
+    errors also tend to deteriorate when the volatility or the time to maturity 
+    increases. In contrast, our algorithm is less sensitive to such parameter 
+    changes. Finally, unlike our algorithm, the formula only works for constant 
+    barrier levels.
+
+    \begin{table}[!t]
+    \centering
+        \caption{Comparison of discrete DOC prices with $m = 50$ monitoring points. 
+                 The initial stock price is $100$, the strike price is $100$, the 
+                 risk-free interest rate is $10\%$, the volatility is $30\%$, the 
+                 time to maturity is $0.2$ year, and the barrier levels are the same 
+                 at all the 50 equally spaced monitoring points, which approximates 
+                 daily monitoring. The 2nd, 4th, and 5th columns are from Table 2.1 
+                 of \cite{Broadie1997}. The 3rd column extrapolates the prices by 
+                 our algorithm using $n = 12550$ and $n = 25050$.}
+        \begin{tabular}{rrrrrr}
+            \specialrule{.1em}{.05em}{.05em} 
+            \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Barrier\\ level\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}(a) Broadie et al.\\ (1997)\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}(b) Our algorithm\\ with extrapolation\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{True}} & \multicolumn{2}{c}{Relative error (\%)} \\ \cline{5-6} 
+            \multicolumn{1}{c}{}                         & \multicolumn{1}{c}{}                                                                                                                   & \multicolumn{1}{c}{}                                                                                              & \multicolumn{1}{c}{}                      & \multicolumn{1}{c}{(a)}                     & \multicolumn{1}{c}{(b)}                     \\ \midrule
+            %90                                           & 6.098                                                                                                                                  & 6.092                                                                                                             & 6.098                                     & 0.0                                         & $-0.1$                                        \\
+            91                                           & 5.977                                                                                                                                  & 5.969                                                                                                             & 5.977                                     & 0.000                                         & $-0.133$                                        \\
+            92                                           & 5.810                                                                                                                                  & 5.799                                                                                                             & 5.810                                     & 0.000                                         & $-0.195$                                        \\
+            93                                           & 5.585                                                                                                                                  & 5.569                                                                                                             & 5.584                                     & 0.018                                         & $-0.262$                                        \\
+            94                                           & 5.288                                                                                                                                  & 5.268                                                                                                             & 5.288                                     & 0.000                                         & $-0.372$                                        \\
+            95                                           & 4.907                                                                                                                                  & 4.882                                                                                                             & 4.907                                     & 0.000                                         & $-0.519$                                        \\
+            96                                           & 4.428                                                                                                                                  & 4.395                                                                                                             & 4.427                                     & 0.023                                         & $-0.728$                                        \\
+            97                                           & 3.836                                                                                                                                  & 3.795                                                                                                             & 3.834                                     & 0.052                                         & $-1.025$                                        \\
+            98                                           & 3.121                                                                                                                                  & 3.080                                                                                                             & 3.126                                     & $-0.160$                                      & $-1.466$                                        \\
+            99                                           & 2.271                                                                                                                                  & 2.287                                                                                                             & 2.337                                     & $-2.824$                                      & $-2.147$                                        \\ \specialrule{.1em}{.05em}{.05em}
+            %99.1                                         & 2.179                                                                                                                                  & 2.206                                                                                                             & 2.182                                     & $-0.137$                                      & $1.100$                                        \\ 
+            %99.2                                         & 2.084                                                                                                                                  & 2.126                                                                                                             & 2.021                                     & $3.117$                                       & $5.195$                                        \\ 
+            %99.3                                         & 1.989                                                                                                                                  & 2.046                                                                                                             & 2.014                                     & $-1.241$                                      & $1.589$                                        \\ 
+            %99.4                                         & 1.892                                                                                                                                  & 1.966                                                                                                             & 1.900                                     & $-0.421$                                      & $3.474$                                        \\ 
+            %99.5                                         & 1.793                                                                                                                                 & 1.887                                                                                                             & 1.852                                     & $-3.186$                                       & $1.890$                                        \\ \specialrule{.1em}{.05em}{.05em} 
+            \end{tabular}
+        \label{tb:discrete_price}
+    \end{table}
+
+    \begin{figure}[!t]
+    \centering
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_option_pricing_discrete91.pdf}
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_option_pricing_discrete91_time.pdf}
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_option_pricing_discrete99.pdf}
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_option_pricing_discrete99_time.pdf}
+        \caption{Convergence and speedups in pricing discrete DOCs by our algorithm. 
+                 The parameters are the same as those in 
+                 Table~\ref{tb:discrete_price}. The left exhibits show the 
+                 convergence of our algorithm. The right exhibits plot the speedups 
+                 of our algorithm over the standard algorithm. The $x$-axes denote 
+                 the number of time steps.} 
+        \label{fig:discrete_barrier_option_pricing}
+    \end{figure}
+
+    \begin{table}[!t]
+    \centering
+        \caption{Comparison of discrete DOC prices with $m = 5,\ 25$ monitoring points. 
+                 The parameters are the same as those in Table~\ref{tb:discrete_price} 
+                 except $m$. The 3nd, 5th, and 6th columns are from Table 2.2 of 
+                 \cite{Broadie1997}. The 4th column extrapolates the prices by our 
+                 algorithm using $n = 6275$ and $n = 12525$ for $m = 25$, and 
+                 $n = 1255$ and $n =  2505$ for $m = 5$.}
+        \begin{tabular}{lrrrrrr}
+        \specialrule{.1em}{.05em}{.05em}
+            \multirow{2}{*}{$m$}  & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Barrier\\ level\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}(a) Broadie et al.\\ (1997)\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}(b) Our algorithm\\ with extrapolation\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{True}} & \multicolumn{2}{c}{Relative error (\%)} \\ \cline{6-7} 
+                            & \multicolumn{1}{c}{}                         & \multicolumn{1}{c}{}                                                                                                                   & \multicolumn{1}{c}{}                                                                                              & \multicolumn{1}{c}{}                      & \multicolumn{1}{c}{(a)}                     & \multicolumn{1}{c}{(b)}                     \\ \midrule
+        \multirow{5}{*}{25} & 91                                           & 6.033                                                                                                                                  & 6.022                                                                                                             & 6.032                                     & 0.017                                         & $-0.161$                                        \\
+                            & 93                                           & 5.688                                                                                                                                  & 5.669                                                                                                             & 5.688                                     & 0.000                                         & $-0.337$                                        \\
+                            & 95                                           & 5.084                                                                                                                                  & 5.049                                                                                                             & 5.081                                     & 0.059                                         & $-0.624$                                        \\
+                            & 97                                           & 4.113                                                                                                                                  & 4.067                                                                                                             & 4.116                                     & $-0.073$                                      & $-1.202$                                        \\
+                            & 99                                           & 2.673                                                                                                                                  & 2.752                                                                                                             & 2.813                                     & $-4.977$                                      & $-2.170$                                        \\ \midrule
+        \multirow{5}{*}{5}  & 91                                           & 6.194                                                                                                                                  & 6.175                                                                                                             & 6.187                                     & 0.113                                         & $-0.187$                                        \\
+                            & 93                                           & 6.004                                                                                                                                  & 5.977                                                                                                             & 6.000                                     & 0.067                                         & $-0.385$                                        \\
+                            & 95                                           & 5.646                                                                                                                                  & 5.633                                                                                                             & 5.671                                     & $-0.441$                                      & $-0.672$                                        \\
+                            & 97                                           & 5.028                                                                                                                                  & 5.111                                                                                                             & 5.167                                     & $-2.690$                                      & $-1.080$                                        \\
+                            & 99                                           & 4.050                                                                                                                                  & 4.469                                                                                                             & 4.489                                     & $-9.779$                                      & $-0.435$                                        \\ \specialrule{.1em}{.05em}{.05em}
+        \end{tabular}
+        \label{tb:discrete_price2}
+    \end{table}
+
+    \begin{table}[!t]
+    \centering
+        \caption{Comparison of discrete DOC prices under different volatilities, 
+                 times to maturities, and strike prices. The parameters are the same 
+                 as in Table~\ref{tb:discrete_price} except that Panel A raises the 
+                 volatility to $60\%$, Panel B raises the time to maturity to $2$ 
+                 years, and Panel C raises the strike price to $110$. The 3rd, 5th, 
+                 and 6th columns are from Table 2.3 of \cite{Broadie1997}. The 4th 
+                 column extrapolates the prices by our algorithm with 
+                 $n = 12550$ and $n = 25050$.}
+        \begin{tabular}{lrrrrrr}
+        \specialrule{.1em}{.05em}{.05em}
+        \multirow{2}{*}{Panel} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Barrier\\ level\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}(a) Broadie et al. \\ (1997)\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}(b) Our algorithm\\ with extrapolation\end{tabular}}} & \multicolumn{1}{c}{\multirow{2}{*}{True}} & \multicolumn{2}{c}{Relative error (\%)}            \\ \cline{6-7} 
+                               & \multicolumn{1}{c}{}                         & \multicolumn{1}{c}{}                                                                                      & \multicolumn{1}{c}{}                                                                                                & \multicolumn{1}{c}{}                      & \multicolumn{1}{c}{(a)} & \multicolumn{1}{c}{(b)} \\ \midrule
+        \multirow{5}{*}{A}     & 91                                           & 8.573                                                                                                     & 8.521                                                                                                               & 8.572                                     & 0.012                    & $-0.596$                   \\
+                               & 93                                           & 7.566                                                                                                     & 7.499                                                                                                               & 7.563                                     & 0.040                    & $-0.845$                   \\
+                               & 95                                           & 6.346                                                                                                     & 6.266                                                                                                               & 6.344                                     & 0.032                    & $-1.234$                   \\
+                               & 97                                           & 4.900                                                                                                     & 4.853                                                                                                               & 4.941                                     & $-0.830$                 & $-1.771$                   \\
+                               & 99                                           & 3.219                                                                                                     & 3.286                                                                                                               & 3.475                                     & $-7.367$                 & $-2.549$                   \\ \midrule
+        \multirow{5}{*}{B}     & 91                                           & 16.446                                                                                                    & 16.275                                                                                                              & 16.436                                    & 0.061                    & $-0.978$                   \\
+                               & 93                                           & 14.534                                                                                                    & 14.354                                                                                                              & 14.537                                    & 0.021                    & $-1.258$                   \\
+                               & 95                                           & 12.371                                                                                                    & 12.250                                                                                                              & 12.451                                    & -0.643                   & $-1.617$                   \\
+                               & 97                                           & 9.945                                                                                                     & 10.043                                                                                                              & 10.254                                    & $-3.013$                 & $-2.061$                   \\
+                               & 99                                           & 7.243                                                                                                     & 7.950                                                                                                               & 8.061                                     & $-10.148$                & $-1.377$                   \\ \midrule
+        \multirow{5}{*}{C}     & 91                                           & 2.433                                                                                                     & 2.431                                                                                                               & 2.433                                     & 0.000                    & $-0.078$                    \\
+                               & 93                                           & 2.336                                                                                                     & 2.332                                                                                                               & 2.336                                     & 0.000                    & $-0.158$                    \\
+                               & 95                                           & 2.136                                                                                                     & 2.127                                                                                                               & 2.135                                     & 0.047                    & $-0.358$                    \\
+                               & 97                                           & 1.757                                                                                                     & 1.741                                                                                                               & 1.756                                     & 0.057                    & $-0.864$                   \\
+                               & 99                                           & 1.105                                                                                                     & 1.114                                                                                                               & 1.136                                     & $-2.729$                 & $-1.910$                   \\ \specialrule{.1em}{.05em}{.05em}
+        \end{tabular}
+        \label{tb:discrete_price3}
+    \end{table}
+
+    \begin{figure}[!t]
+    \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                    width=0.6\textwidth,
+                    height=0.45\textwidth,
+                    xtick = {0.5,1.5,2.5},
+                    xticklabels = {0,0.5,1},
+                    xticklabel style={text height=1.5ex, font=\large},
+                    ytick = {2},
+                    yticklabels = {100},
+                    yticklabel style={font=\large},
+                    xmin=-0.5,xmax=3,
+                    ymin=0,ymax=4,
+                ]
+                \addplot[line,-,domain=1.5:2.5]{2}; %node [midway,above] {$b_2$};
+                \addplot[solid] coordinates{(1.5,2)(2.5,2)};
+            \end{axis}
+        \end{tikzpicture}
+        \caption{A partial barrier.}
+        \label{fig:partial_barrier}
+    \end{figure}
+
+    \begin{figure}[!t]
+    \centering
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_partial_barrier_option_pricing.pdf}
+        \includegraphics[width = 0.495\textwidth]{figures/experiment_partial_barrier_option_pricing_speedup.pdf}
+        \caption{Convergence and speedups in pricing a partial-barrier DOC by our 
+                 algorithm. The initial stock price is $105$, the strike price is 
+                 $110$, the interest rate is $10\%$, the volatility is $25\%$, and 
+                 the time to maturity is $1$ year. Its barrier appears in 
+                 Figure~\ref{fig:partial_barrier}. The left exhibit shows the 
+                 convergence of our algorithm. The true price is 11.6055 (dotted 
+                 line). The right exhibit plots the speedups of our algorithm over 
+                 the standard algorithm.}
+        \label{fig:partial_barrier_option}
+    \end{figure}
+
+    Figure~\ref{fig:partial_barrier} illustrates the barrier of a partial-barrier 
+    option with a one-year maturity. This barrier starts at the half year and lasts 
+    for half a year with a level of 100. The true price is 11.6055 by the formula in 
+    \cite{Heynen1994}.  
+    %The Brownian-bridge approach with 10 million 
+    %paths gives a mean price of 11.608 and a 
+    %standard error of 0.006.
+    Figure~\ref{fig:partial_barrier_option} depicts the convergence and speedups.
+    %The initial stock price is $105$, the 
+    %strike price is $110$, the annual growth 
+    %rate is $10\%$, the volatility is $25\%$, 
+    %the time to maturity is $1$ year. 
+    Our algorithm converges very fast, and the pricing errors are at most 0.0004. 
+    The speedups over the standard algorithm range from 7.05 to 25.86 for 
+    $402 \leq n \leq 2802$ (in increments of 4).

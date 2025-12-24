@@ -1,5 +1,47 @@
 % !TeX root = ../main.tex
 
-\appendix{A}{Introduction}
-\section{Introduction}
-\section{Further Introduction}
+\appendix{A}{Validity of Branching Probabilities}\label{appendix:validity_of_p}
+
+   To prove $P_u$, $P_m$, and $P_d$ are valid probabilities, it suffices to prove
+    $P_u, P_m, P_d \geq 0$. We know $\Delta$ is negative in formula~(\ref{eq:det}). 
+    This means $\Delta_u$, $\Delta_m$, and $\Delta_d$ in 
+    formulas~(\ref{eq:detu})--(\ref{eq:detd}) must be non-positive or, equivalently,
+    $\beta\gamma  + \text{Var} \geq 0$, $\alpha\gamma + \text{Var} \leq 0$, and
+    $\alpha\beta  + \text{Var} \geq 0$. From 
+    formulas~(\ref{eq:detu})--(\ref{eq:detd}) and 
+    inequalities~(\ref{eq:beta_range}), we have
+    \begin{align*}
+        \beta\gamma  + \text{Var}\quad  &=\quad \beta^2 - 2\beta\sigma\sqrt{\Delta t} + \sigma^2\Delta t \\
+                                        &=\quad \left(\beta - 2\sigma\sqrt{\Delta t}\right)^2 \geq 0, \numberthis \label{eq:appexdixA1} \\
+        \alpha\gamma + \text{Var}\quad  &=\quad \beta^2 - 4\sigma^2\Delta t + \sigma^2\Delta t \\
+                                        &=\quad \beta^2 - 3\sigma^2\Delta t \leq 0, \numberthis \label{eq:appexdixA2} \\
+        \alpha\beta  + \text{Var}\quad  &=\quad \beta^2 + 2\beta\sigma\sqrt{\Delta t} + \sigma^2\Delta t \\
+                                        &=\quad \left(\beta + 2\sigma\sqrt{\Delta t}\right)^2 \geq 0 \numberthis \label{eq:appexdixA3},
+    \end{align*}
+    as desired (see~\cite{BTT}).
+    \newpage
+
+\chapter{Values of $a$, $b$, $c$, and $\eta$ in Equation~(\ref{eq:doc_payoff_structural})}\label{appendix:abeta}
+
+    \begin{equation}
+        a=\begin{cases}
+            \frac{\text{ln}\frac{V^\text{A}_t}{K} + (r+\frac{1}{2}\sigma^2)T}{\sigma\sqrt{T}}, & \text{if $B \geq K$}.\\
+            \frac{\text{ln}\frac{V^\text{A}_t}{B} + (r+\frac{1}{2}\sigma^2)T}{\sigma\sqrt{T}}, & \text{if $B < K$}.
+        \end{cases}
+    \end{equation}
+    
+    \begin{equation}
+        b=\begin{cases}
+            \frac{\text{ln}\frac{B^2}{V^\text{A}_t\,K} + (r+\frac{1}{2}\sigma^2)T}{\sigma\sqrt{T}}, & \text{if $B \geq K$}.\\
+            \frac{\text{ln}\frac{B}{V^\text{A}_t} + (r+\frac{1}{2}\sigma^2)T}{\sigma\sqrt{T}}, & \text{if $B < K$}.
+        \end{cases}
+    \end{equation}
+    
+    \begin{equation}
+        c = \frac{\text{ln}\frac{B}{V^\text{A}_t} + (r+\frac{1}{2}\sigma^2)T}{\sigma\sqrt{T}}.
+    \end{equation}
+    
+    \begin{equation}
+        \eta = \frac{r}{\sigma^2} + \frac{1}{2}.
+    \end{equation}
+

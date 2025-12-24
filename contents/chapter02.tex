@@ -1,26 +1,433 @@
 % !TeX root = ../main.tex
 
-\chapter{中國文學}
+\chapter{Preliminaries}\label{chap:preliminaries}
 
-\section{出師表}
+    This chapter introduces the fundamental concepts relevant to our thesis.
+    Section~\ref{sec:preliminaries-term} defines term sturcture of default 
+    probabilites. Section~\ref{sec:preliminaries-rnp} describes risk-neutral option 
+    pricing. Section~\ref{sec:preliminaries-bo} introduces barrier options.
+    Section~\ref{sec:preliminaries-reflection} explains the reflection principle on 
+    a binomial random walk. Section~\ref{sec:preliminaries-bt} discusses the CRR 
+    tree. Section~\ref{sec:preliminaries-btt} elaborates on the binomial-trinomial 
+    tree, which forms the computational structure of the thesis. 
 
-臣亮言：先帝創業未半，而中道崩殂。今天下三分，益州疲弊，此誠危急存亡之秋也。然侍衛之臣，不懈於內；忠志之士，忘身於外者，蓋追先帝之殊遇，欲報之於陛下也。誠宜開張聖聽，以光先帝遺德，恢弘志士之氣；不宜妄自菲薄，引喻失義，以塞忠諫之路也。宮中府中，俱為一體，陟罰臧否，不宜異同。若有作姦犯科，及為忠善者，宜付有司，論其刑賞，以昭陛下平明之治，不宜篇私，使內外異法也。\par
+\section{Term Structure of Default Probabilities}\label{sec:preliminaries-term}
 
-侍中、侍郎郭攸之、費褘、董允等，此皆良實，志慮忠純，是以先帝簡拔以遺陛下。愚以為宮中之事，事無大小，悉以咨之，然後施行，必能裨補闕漏，有所廣益。將軍向寵，性行淑均，曉暢軍事，試用於昔日，先帝稱之曰「能」，是以眾議舉寵為督。愚以為營中之事，悉以咨之，必能使行陣和睦，優劣得所。親賢臣，遠小人，此先漢所以興隆也；親小人，遠賢臣，此後漢所以傾頹也。先帝在時，每與臣論此事，未嘗不歎息痛恨於桓、靈也。侍中、尚書、長史；參軍，此悉貞良死節之臣也，願陛下親之信之，則漢室之隆，可計日而待也。
+    Define $\tau$ as a nonnegative random variable representing a company's default 
+    time in the future. The term structure of default probabilities is the function 
+    \begin{equation*}
+        p(t\,|\,t_0) = \text{Pr}(\tau \leq t_0 + t\,|\,t_0),
+    \end{equation*}
+    the cumulative probability of defaulting at or before time $t$, observed at time 
+    $t_0$ when the company is not in default (see~\cite{Lando2004} and 
+    \cite{Bluhm2010}). We refer to $t_0+t$ as the monitored time point. For 
+    simplicity, we will omit the term ``cumulative'' and call $p(t\,|\,t_0)$ the 
+    default probability over the time interval $(\,t_0, t_0+t\,]$. 
 
-臣本布衣，躬耕於南陽，苟全性命於亂世，不求聞達於諸侯。先帝不以臣卑鄙，猥自枉屈，三顧臣於草廬之中，諮臣以當世之事，由是感激，遂許先帝以驅馳。後值傾覆，受任於敗軍之際，奉命於危難之間，爾來二十有一年矣！先帝知臣謹慎，故臨崩寄臣以大事也。受命以來，夙夜憂勤，恐託付不效，以傷先帝之明。故五月渡瀘，深入不毛。今南方已定，兵甲已足，當獎率三軍，北定中原，庶竭駑鈍，攘除奸凶，興復漢室，還於舊都；此臣所以報先帝而忠陛下之職分也。至於斟酌損益，進盡忠言，則攸之、褘、允之任也。
+\section{Risk-Neutral Pricing}\label{sec:preliminaries-rnp}
+    
+    Risk-neutral pricing is critical to pricing financial derivatives like options. 
+    It says the price of a derivative equals its expected payoff discounted at the 
+    risk-free interest rate (see~\cite{Hull2006}). In other words, given a payoff 
+    $C_T$ at maturity $T$, its theoretical price $C_0$ now equals
+    \begin{equation}
+        C_0 = e^{-rT}E^Q\left[C_T\right],
+        \label{eq:risk_neutral}
+    \end{equation}
+    where $E^Q[\,\cdot\,]$ is the expectation under the risk-neutral probability 
+    measure $Q$.
 
-願陛下託臣以討賊興復之效；不效，則治臣之罪，以告先帝之靈。若無興德之言，則戮允等，以彰其慢。陛下亦宜自課，以諮諏善道，察納雅言，深追先帝遺詔，臣不勝受恩感激。
+    In the BS model, a stock price $S$ follows a geometric Brownian motion under the 
+    real-world probability measure $P$:
+    \begin{equation}
+        dS\ =\ \mu Sdt + \sigma S\,dW^P,
+        \label{eq:stock_process}
+    \end{equation}
+    where $\mu$ is the the growth rate of the stock price return, $\sigma$ is the 
+    volatility, and $W^P$ is the Wiener process under the $P$ measure. By Ito's 
+    lemma, process~(\ref{eq:stock_process}) becomes 
+    \begin{equation}
+        d\text{log}S\ =\ \left(\mu - \frac{\sigma^2}{2}\,\right)dt + \sigma\,dW^P
+        \label{eq:log_stock_process}
+    \end{equation}
+    (see~\cite{Shreve2004}).
 
-今當遠離，臨表涕泣，不知所云。
+    Under the $Q$ measure, where all assets are expected to grow at the risk-free 
+    interest rate $r$, process~(\ref{eq:log_stock_process}) becomes 
+    \begin{equation*}
+        d\text{log}S\ =\ \left(r - \frac{\sigma^2}{2}\,\right)dt + \sigma\,dW^Q,
+    \end{equation*}
+    where $W^Q$ is the Wiener process under the $Q$ measure.
+    
+\section{Barrier Option}\label{sec:preliminaries-bo}
+    
+    A barrier option is a vanilla option plus a barrier that triggers a specific 
+    event. Its payoff depends on whether the underlying stock's price reaches a given 
+    level at any time before maturity. Depending on the barrier type, the option can 
+    be activated (the knock-in type) or terminated (the knock-out type) when the 
+    barrier is touched. We focus on the latter case. The most basic example is the 
+    down-and-out call (DOC). A DOC is terminated if the barrier is touched by the 
+    underlying stock's price from above. The payoff of a typical DOC is therefore
+    \begin{equation}
+        C^{\text{DOC}}_T = \max\left(S_T - K, 0\right)\mathbbm{1}\left\llbracket S_t > B_t \quad \text{for all}\,t\in [\,0, T\,]\right\rrbracket,
+        \label{eq:doc_payoff}
+    \end{equation}
+    where $S_t$ is the stock price at time $t$, $K$ is the strike price, $B_t$ is the 
+    barrier at time $t$, and $\mathbbm{1}$ is the indicator function. The DODC 
+    mentioned in Section~\ref{sec:introduction-background} has a similar but simpler 
+    payoff:
+    \begin{equation*}
+        C^{\text{DODC}}_T = \mathbbm{1}\left\llbracket S_t > B_t \quad \text{for all}\,t\in [\,0, T\,]\right\rrbracket.
+        \label{eq:dodc_payoff}
+    \end{equation*}
 
-\section{短歌行}
+\section{The Reflection Principle}\label{sec:preliminaries-reflection}
+    
+    A lattice consists of rectangular lines. The intersection of two lines defines a 
+    lattice point. A binomial random walk on the lattice allows a move from position 
+    $(i, j)$ to $(i+1, j+1)$ or $(i+1, j-1)$ per step. We now count the number of 
+    walks that start from $(0, u)$ and end at $(n, v)$ while hitting the $x$-axis in 
+    the process. The reflection principle says that number equals the number of 
+    walks from $(0, -u)$ to $(n, v)$ when $n-u-v$ is even and $u > 0$. This is 
+    because reflecting the part of the walk before it touches the $x$-axis for the 
+    first time yields a walk from $(0, -u)$ in a one-to-one manner (see 
+    Figure~\ref{fig:reflection_principle}). Because such walks must contain $v+u$ 
+    more up moves than down moves in $n$ steps, the desired count totals
+    \begin{equation}
+        \frac{n!}{\left[\,\left(n+u+v\right)/2\,\right]!\left[\,\left(n-u-v\right)/2\,\right]!}\ =\ \binom{n}{\frac{n-u-v}{2}}
+        \label{eq:reflection_principle}
+    \end{equation}
+    and zero when $n-u-v < 0$ or $n-u-v > n$ (see~\cite{Lyuu1998}). 
+        
+    \begin{figure}[!t]
+        \centering
+        \begin{tikzpicture}
+            \draw[step=1cm,color=gray,dotted] (.75,.75) grid (12.25,5.25);
+            \node[left=0.2cm] at (1,1){$(0,-u)$};
+            \node[left=0.2cm] at (1,5){$(0,u)$};
+            \node[right=0.2cm] at (12,4){$(n,v)$};
+            \draw[-] (1,5) -- (2,4); 
+            \draw[-] (2,4) -- (3,5); 
+            \draw[-] (3,5) -- (4,4); 
+            \draw[-] (4,4) -- (5,3); 
+            \draw[-] (5,3) -- (6,4); 
+            \draw[-] (6,4) -- (7,3); 
+            \draw[-] (7,3) -- (8,4); 
+            \draw[-] (8,4) -- (9,5); 
+            \draw[-] (9,5) -- (10,4); 
+            \draw[-] (10,4) -- (11,3); 
+            \draw[-{Latex[length=2mm]}] (11,3) -- (12,4); 
+            \draw[dashed] (1,1) -- (2,2); 
+            \draw[dashed] (2,2) -- (3,1); 
+            \draw[dashed] (3,1) -- (4,2); 
+            \draw[dashed] (4,2) -- (5,3); 
+            \draw[-, line width=0.25mm] (0.75,3) -- (12.25,3); 
+        \end{tikzpicture}
+        \caption{The reflection principle. The thick horizontal line denotes the $x$-axis.}
+        \label{fig:reflection_principle}
+    \end{figure}
 
-對酒當歌，人生幾何！譬如朝露，去日苦多。
-慨當以慷，憂思難忘。何以解憂？唯有杜康。
-青青子衿，悠悠我心。但為君故，沉吟至今。
-呦呦鹿鳴，食野之苹。我有嘉賓，鼓瑟吹笙。
-明明如月，何時可掇？憂從中來，不可斷絕。
-越陌度阡，枉用相存。契闊談宴，心念舊恩。
-月明星稀，烏鵲南飛。繞樹三匝，何枝可依？
-山不厭高，海不厭深。周公吐哺，天下歸心。
+\section{The CRR Tree}\label{sec:preliminaries-bt}
+
+    Assume the logarithmic stock price follows process~(\ref{eq:log_stock_process}). 
+    A binomial tree discretizes process~(\ref{eq:log_stock_process}) from $t$ to $T$ 
+    by dividing it evenly into $n$ time steps; thus each time step has a duration of 
+    $\Delta t \equiv (T-t)/n$. The logarithmic stock price $\text{log}S$ can either 
+    go upward to $\text{log}S + \text{log}u$ with probability $p$ or downward to 
+    $\text{log}S + \text{log}d$ with probability $1-p$ per step, where $u$, $d$, and 
+    $p$ are chosen to match the mean and variance of 
+    process~(\ref{eq:log_stock_process}) asymptotically. These parameters are chosen
+    by the CRR to be $u \equiv e^{\sigma\sqrt{\Delta t}}$, 
+    $d \equiv e^{-\sigma\sqrt{\Delta t}}$, and 
+    $p \equiv (e^{\mu \Delta t} - d)/(u - d)$. They are attractive because the 
+    property $ud = 1$ is convenient for our base case, where the barrier is a 
+    constant barrier or a step function. Figure~\ref{fig:btree} illustrates a CRR 
+    tree for $n = 2$. Note that the spacing between two vertically adjacent nodes is 
+    $2\sigma\sqrt{\Delta t}\,$. For the risk-neutral measure needed for options 
+    pricing, simply set $\mu = r$, the risk-free interest rate.
+
+    The growth rate and the volatility in process~(\ref{eq:log_stock_process}) are 
+    constants. In more general models, these parameters can be functions of time, 
+    denoted by $\mu(t)$ and $\sigma(t)$ (see~\cite{LyuuZhang2023}).
+
+    \begin{figure}[!t]
+        \centering
+        \begin{tikzpicture}
+            \matrix (tree) [%
+              nodes in empty cells,
+              matrix of nodes,
+              column sep=2cm,
+              row sep=1.5cm,
+              ampersand replacement=\&
+            ]
+            {
+                             \&                             \& $\text{log}S$ + 2$\text{log}u$ \&[-1.5cm]\\
+                             \& $\text{log}S$ + $\text{log}u$ \&                              \&[-1.5cm]\\
+                $\text{log}S$ \&                             \& $\text{log}S$                 \&[-1.5cm]\\
+                             \& $\text{log}S$ + $\text{log}d$ \&                              \&[-1.5cm]\\
+                             \&                             \& $\text{log}S$ + 2$\text{log}d$ \&[-1.5cm]\\
+                         $|$ \&           $|$               \&             $|$              \&[-1.5cm]\\
+            };
+            \draw[-{Latex[length=2mm]}] (tree-3-1) -- (tree-2-2) node[midway,above] {$p$};
+            \draw[-{Latex[length=2mm]}] (tree-3-1) -- (tree-4-2) node[midway,above] {$1-p$};
+            \draw[-{Latex[length=2mm]}] (tree-2-2) -- (tree-1-3) node[midway,above] {$p$};
+            \draw[-{Latex[length=2mm]}] (tree-2-2) -- (tree-3-3) node[midway,above] {$1-p$};
+            \draw[-{Latex[length=2mm]}] (tree-4-2) -- (tree-3-3) node[midway,above] {$p$};
+            \draw[-{Latex[length=2mm]}] (tree-4-2) -- (tree-5-3) node[midway,above] {$1-p$};
+            \node[below=0.5cm] at (tree-6-1) {$t$};
+            \node[below=0.5cm] at (tree-6-2) {$t+\Delta t$};
+            \node[below=0.5cm] at (tree-6-3) {$t+2\Delta t$};
+            \node[below=1.1cm] at (tree-6-3) {$(=T)$};
+            \draw[row sep=0.25cm] (tree-6-1.mid) -- (tree-6-3.mid) ;
+            \draw[<->, line width=0.5mm] (tree-1-4.south west) -- (tree-3-4.north west) node[midway,right=1mm] {$2\sigma\sqrt{\Delta t}$};
+            \draw[<->, line width=0.5mm] (tree-3-4.south west) -- (tree-5-4.north west) node[midway,right=1mm] {$2\sigma\sqrt{\Delta t}$};
+        \end{tikzpicture}
+        \vspace*{1mm}
+        \caption{A CRR tree for $n = 2$.}
+        \label{fig:btree}
+    \end{figure}
+
+\section{The Binomial-Trinomial Tree}\label{sec:preliminaries-btt}
+        
+    A binomial-trinomial tree (BTT) starts with a trinomial structure in the first 
+    time step and continues on with a binomial one. Below, we illustrate how to 
+    construct a BTT with a barrier $b$ in logarithm from $t$ to $T$ with reference to 
+    Figure~\ref{fig:bino_tri_lattice_with_barrier}. First, lay down the lattice 
+    underlying the \emph{binomial} structure, where one of the horizontal lines is 
+    aligned with $b$. The horizontal lines of the lattice are equispaced at 
+    $\sigma\sqrt{\Delta t}$ apart. Let $s_z$ denote the logarithmic stock price of 
+    node $z$ and define $s_\text{X} - s_\text{Y}$ as the logarithmic return from node 
+    X to node Y. Define $\theta \equiv (\mu-\sigma^2/2)\,\Delta t$ as the expected 
+    logarithmic return for continuous-time model~(\ref{eq:log_stock_process}) at time 
+    $\Delta t$. The trinomial structure for the first time step at the root node R is 
+    built as follows. Name R's top, middle, and bottom successor nodes A, B, and C,
+    respectively. Place node B on the grid point at time $\Delta t$ so that
+    $\hat{\theta} \equiv s_\text{B}-s_\text{R}$ is closest to $\theta$, breaking ties 
+    in favor of the lower node. Place node A (node C) $2\sigma\sqrt{\Delta t}$ higher
+    (lower, resp.) than node B. 
+
+    \begin{figure}[!t]
+        \centering
+        \resizebox{0.9\textwidth}{!}{
+          \begin{tikzpicture}[myset/.list={(5,2),(7,2),(9,2),
+              (4,3),(6,3),(8,3),(10,3),
+              (3,4),(5,4),(7,4),(9,4),(11,4),
+              (2,5),(4,5),(6,5),(8,5),(10,5),(12,5),
+              (1,6),(3,6),(5,6),(7,6),(9,6),(13,6)}, fillset/.list={(11,6)},
+              fontset/.list={(15,1),(15,2),(15,3),(15,4),(15,5),(15,6)},
+              left extended/.style={shorten <=-#1},
+              left extended/.default=1cm,
+              right extended/.style={shorten >=-#1},
+              right extended/.default=1cm]
+          \matrix (tree) [%
+            nodes in empty cells,
+            matrix of nodes,
+            nodes={anchor=center,minimum size=0.75cm},
+            column sep=1.5cm,
+            row sep=0.5cm,
+            ampersand replacement=\&
+          ]
+          {
+                \&   \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \& A \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \& B \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \& C \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+                \&   \& \& \& \&   \& \\
+              $|$ \& $|$ \& $|$ \& $|$ \& $|$ \& $|$ \& \\
+          };
+          \begin{pgfonlayer}{background}
+              \draw[line width=0.5mm, left extended] (tree-11-1) -- (tree-11-6);
+              \foreach \y in {1,...,6}{
+                  \draw[dashed, left extended, right extended] (tree-1-\y) -- (tree-13-\y);
+              }
+              \foreach \x in {1,2,3,4,6,8,10,11,12,13}{
+                  \draw[dashed, left extended, right extended] (tree-\x-2) -- (tree-\x-6);
+              }
+              \foreach \x in {5,7,9}{
+                  \draw[dashed, left extended=1.06cm, right extended] (tree-\x-2) -- (tree-\x-6);
+              }
+          \end{pgfonlayer}
+          \node[right=1cm,font=\large] at (tree-11-6) {$b$};
+          \node[right=1cm,font=\large] at (tree-1-6) {$b + 10\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-2-6) {$b + 9\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-3-6) {$b + 8\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-4-6) {$b + 7\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-5-6) {$b + 6\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-6-6) {$b + 5\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-7-6) {$b + 4\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-8-6) {$b + 3\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-9-6) {$b + 2\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-10-6) {$b + \sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-13-6) {$b - 2\sigma\sqrt{\Delta t}$};
+          \node[right=1cm,font=\large] at (tree-12-6) {$b - \sigma\sqrt{\Delta t}$};
+          \node[below=0.5cm,font=\large] at (tree-14-1) {$t$};
+          \node[below=0.5cm,font=\large] at (tree-14-2) {$t + \Delta t$};
+          \node[below=0.5cm,font=\large] at (tree-14-3) {$t + 2\Delta t$};
+          \node[below=0.5cm,font=\large] at (tree-14-4) {$t + 3\Delta t$};
+          \node[below=0.5cm,font=\large] at (tree-14-5) {$t + 4\Delta t$};
+          \node[below=0.5cm,font=\large] at (tree-14-6) {$t + 5\Delta t$};
+          \node[below=1.2cm,font=\large] at (tree-14-6) {$(=T)$};
+          \draw[-{Latex[length=2mm]}] (tree-8-1.north) -- (tree-5-2) node [midway,above=3mm,font=\large] {$P_u$}; 
+          \draw[-{Latex[length=2mm]}] (tree-8-1.north) -- (tree-7-2) node [midway,below,font=\large] {$P_m$}; 
+          \draw[-{Latex[length=2mm]}] (tree-8-1.north) -- (tree-9-2) node [midway,below,font=\large] {$P_d$};
+          \node[draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center] at (tree-8-1.north) {R};
+          \draw[-{Latex[length=2mm]}] (tree-5-2) -- (tree-4-3); 
+          \draw[-{Latex[length=2mm]}] (tree-5-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-10-3); 
+          \draw[-{Latex[length=2mm]}] (tree-4-3) -- (tree-3-4); 
+          \draw[-{Latex[length=2mm]}] (tree-4-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-11-4); 
+          \draw[-{Latex[length=2mm]}] (tree-3-4) -- (tree-2-5); 
+          \draw[-{Latex[length=2mm]}] (tree-3-4) -- (tree-4-5); 
+          \draw[-{Latex[length=2mm]}] (tree-5-4) -- (tree-4-5); 
+          \draw[-{Latex[length=2mm]}] (tree-5-4) -- (tree-6-5); 
+          \draw[-{Latex[length=2mm]}] (tree-7-4) -- (tree-6-5); 
+          \draw[-{Latex[length=2mm]}] (tree-7-4) -- (tree-8-5); 
+          \draw[-{Latex[length=2mm]}] (tree-9-4) -- (tree-8-5); 
+          \draw[-{Latex[length=2mm]}] (tree-9-4) -- (tree-10-5); 
+          \draw[-{Latex[length=2mm]}] (tree-11-4) -- (tree-10-5); 
+          \draw[-{Latex[length=2mm]}] (tree-11-4) -- (tree-12-5); 
+          \draw[-{Latex[length=2mm]}] (tree-2-5) -- (tree-1-6); 
+          \draw[-{Latex[length=2mm]}] (tree-2-5) -- (tree-3-6); 
+          \draw[-{Latex[length=2mm]}] (tree-4-5) -- (tree-3-6); 
+          \draw[-{Latex[length=2mm]}] (tree-4-5) -- (tree-5-6); 
+          \draw[-{Latex[length=2mm]}] (tree-6-5) -- (tree-5-6); 
+          \draw[-{Latex[length=2mm]}] (tree-6-5) -- (tree-7-6); 
+          \draw[-{Latex[length=2mm]}] (tree-8-5) -- (tree-7-6); 
+          \draw[-{Latex[length=2mm]}] (tree-8-5) -- (tree-9-6); 
+          \draw[-{Latex[length=2mm]}] (tree-10-5) -- (tree-9-6); 
+          \draw[-{Latex[length=2mm]}] (tree-10-5) -- (tree-11-6); 
+          \draw[-{Latex[length=2mm]}] (tree-12-5) -- (tree-11-6); 
+          \draw[-{Latex[length=2mm]}] (tree-12-5) -- (tree-13-6); 
+          \draw (tree-14-1.mid) -- (tree-14-6.mid);
+          %\draw[dashed, line width=0.5mm] (tree-7-6.east) -- (tree-7-7.east) ;
+          %\draw[dashed, line width=0.5mm] (tree-9-6.east) -- (tree-9-7.east) ;
+          %\draw[latex-latex, line width=0.5mm] (tree-7-7.west) -- (tree-9-7.west) node[midway,right=1mm,font=\large] {$2\sigma\sqrt{\Delta t}$};
+        \end{tikzpicture}}
+        \vspace*{1mm}
+        \caption{A BTT with a barrier $b$. It starts with a trinomial structure. The part 
+                 after time $t+\Delta t$ features a binomial structure.}
+        \label{fig:bino_tri_lattice_with_barrier}
+    \end{figure}
+
+    Define
+    \begin{align*}
+        \alpha\quad &\equiv\quad \hat{\theta} - \theta + 2\sigma \sqrt{\Delta t}, \numberthis \label{eq:alpha} \\[3pt]
+         \beta\quad &\equiv\quad \hat{\theta} - \theta, \numberthis \label{eq:beta} \\[3pt]
+        \gamma\quad &\equiv\quad \hat{\theta} - \theta - 2\sigma \sqrt{\Delta t} \numberthis \label{eq:gamma}
+    \end{align*}
+    (see~Figure~\ref{fig:tri}). Because the horizontal lines are 
+    $\sigma\sqrt{\Delta t}$ apart, we have
+    \begin{equation}
+        - \sigma\sqrt{\Delta t}\ \leq\ \beta\ \leq\ \sigma\sqrt{\Delta t}.
+        \label{eq:beta_range}
+    \end{equation}
+    After the trinomial structure is established, grow a binomial structure from 
+    nodes A, B, and C at time $\Delta t$ through time $T$ on the underlying grid (see 
+    Figure~\ref{fig:bino_tri_lattice_with_barrier}). Note that the position of node B 
+    can be written as $b + i^*\,\sigma\sqrt{\Delta t}$ where
+    \begin{equation*}
+        i^* \quad=\quad \operatorname*{argmin}_{i\in Z} \left\vert\,b + i\,\sigma\sqrt{\Delta t} - \theta\,\right\vert
+    \end{equation*}
+    and, in case the minimum value is reached at two $i$s, the lower $i$ is chosen 
+    because the algorithm breaks ties in favor of the lower node.
+
+    \begin{figure}[!t]
+        \centering
+        \begin{tikzpicture}
+            [myset/.list={(6,1),(1,3),(4,3),(7,3)},
+              left extended/.style={shorten <=-#1},
+              left extended/.default=1cm,
+              right extended/.style={shorten >=-#1},
+              right extended/.default=1cm]
+          \matrix (tree) [%
+            nodes in empty cells,
+            matrix of nodes,
+            nodes={anchor=center,minimum size=0.75cm},
+            column sep=2cm,
+            row sep=0.3cm,
+            ampersand replacement=\&
+          ]
+          {
+                   \& \&  A  \&   \& \\
+                   \& \&     \&   \& \\
+                   \& \&     \&   \& \\
+                   \& \&  B  \&   \& \\
+                   \& \&     \&   \& \\
+              R    \& \&     \&   \& \\
+                   \& \&  C  \&   \& \\
+              $|$  \& \& $|$ \&   \& \\
+          };
+            \node[below=0.5cm,font=\large] at (tree-8-1) {$t$};
+            \node[below=0.5cm,font=\large] at (tree-8-3) {$t+\Delta t$};
+            \draw[-{Latex[length=3mm]}] (tree-6-1) -- (tree-1-3) node [midway,above=3mm,font=\large] {$P_u$}; 
+            \draw[-{Latex[length=3mm]}] (tree-6-1) -- (tree-4-3) node [midway,below,font=\large] {$P_m$}; 
+            \draw[-{Latex[length=3mm]}] (tree-6-1) -- (tree-7-3) node [midway,below,font=\large] {$P_d$}; 
+            \draw[line width=0.5mm, left extended=1.8cm] (tree-1-4) -- (tree-1-5) node [right=0.5mm,font=\large] {$\hat{\theta} + 2\sigma\sqrt{\Delta t}$}; 
+            \draw[line width=0.5mm] (tree-4-4) -- (tree-4-5) node [right=0.5mm,font=\large] {$\hat{\theta}$}; 
+            \draw[dashed, line width=0.5mm, left extended=1.8cm] (tree-5-4) -- (tree-5-5) node [right=0.5mm,font=\large] {$\theta$}; 
+            \draw[line width=0.5mm, left extended=1.8cm] (tree-7-4) -- (tree-7-5) node [right=0.5mm,font=\large] {$\hat{\theta} - 2\sigma\sqrt{\Delta t}$}; 
+            \draw[latex-latex, line width=0.5mm, left extended=0.2cm, right extended=0.2cm] (tree-4-4.south east) -- (tree-5-4.north east) node [midway,right=1mm,font=\large] {$|\ \beta\ |$}; 
+            \draw[latex-latex, line width=0.5mm, left extended=0.2cm, right extended=0.2cm] (tree-1-4.south west) -- (tree-5-4.north west) node [midway,right=1mm,font=\large] {$|\ \alpha\ |$}; 
+            \draw[latex-latex, line width=0.5mm, left extended=0.2cm, right extended=0.2cm] (tree-5-4.south west) -- (tree-7-4.north west) node [midway,right=1mm,font=\large] {$|\ \gamma\ |$}; 
+            \draw[-] (tree-8-1.mid) -- (tree-8-3.mid); 
+        \end{tikzpicture}
+        \caption{The trinomial structure of a BTT.}
+        \label{fig:tri}
+    \end{figure}
+    
+    Obtain the branching probabilities by solving the following linear equations: 
+    \begin{empheq}{align}
+        P_u\alpha + P_m\beta + P_d\gamma\quad   &=\quad 0, \label{eq:mean} \\
+        P_u\alpha^2 + P_m\beta^2 + P_d\gamma^2\quad &=\quad \text{Var} \label{eq:variance}, \\
+        P_u + P_m + P_d\quad &=\quad 1 \label{eq:probs},
+    \end{empheq}
+    where Var $\equiv \sigma^2\Delta t$ is the variance of the logarithmic return 
+    after $\Delta t$ time under the process~(\ref{eq:log_stock_process}). 
+    Equations~(\ref{eq:mean}) and (\ref{eq:variance}) match the mean and variance of 
+    the underlying model. Equation~(\ref{eq:probs}) makes sure they are 
+    probabilities when they are also non-negative. By Cramer's rule, 
+    $P_u = \Delta_u/\Delta$, $P_m = \Delta_m/\Delta$, and $P_d = \Delta_d/\Delta$, 
+    where
+    \begin{align*}
+        \Delta  \quad &\equiv \quad \left(\beta - \alpha\right)\left(\gamma - \beta\right)\left(\gamma - \alpha\right) = -16\left(\sigma\sqrt{\Delta t}\right)^3, \numberthis \label{eq:det} \\
+        \Delta_u\quad &\equiv \quad \left(\beta\gamma  + \text{Var}\right)\left(\gamma - \beta\right) = -2\sigma\sqrt{\Delta t}(\beta\gamma  + \text{Var}), \numberthis \label{eq:detu} \\
+        \Delta_m\quad &\equiv \quad \left(\alpha\gamma + \text{Var}\right)\left(\alpha - \gamma\right) = 4\sigma\sqrt{\Delta t}(\alpha\gamma + \text{Var}), \numberthis \label{eq:detm} \\
+        \Delta_d\quad &\equiv \quad \left(\alpha\beta  + \text{Var}\right)\left(\beta  - \alpha\right) = -2\sigma\sqrt{\Delta t}(\alpha\beta  + \text{Var}). \numberthis \label{eq:detd}
+    \end{align*}
+    Appendix~\ref{appendix:validity_of_p} proves the validity of the three 
+    probabilities. Note that $\beta$ determines the actual positions of nodes A, B, 
+    and C on the lattice, thus the whole binomial structure by extension. From 
+    formulas~(\ref{eq:alpha})--(\ref{eq:gamma}) and 
+    (\ref{eq:det})--(\ref{eq:detd}):
+    \begin{align*}
+        P_u \quad &=\quad \frac{\left(\beta-\sigma\sqrt{\Delta t}\right)^2}{8\sigma^2\Delta t}, \numberthis \label{eq:pu} \\
+        P_m \quad &=\quad \frac{3\sigma^2\Delta t - \beta^2}{4\sigma^2\Delta t}, \numberthis \label{eq:pm} \\
+        P_d \quad &=\quad \frac{\left(\beta+\sigma\sqrt{\Delta t}\right)^2}{8\sigma^2\Delta t} \numberthis \label{eq:pd}.
+    \end{align*}
+    Note that $P_u$, $P_m$, and $P_d$ are quadratic functions of $\beta$, which is a 
+    critical property in solving the implied barrier later. 
+
+    Incidentally, making the middle branch track the expected logarithmic return 
+    instead of simply being flat, a standard choice, solves the notorious 
+    barrier-too-close problem (see~\cite{BTT}). This problem refers to the need of 
+    very large $n$ for trees when the barrier level of a barrier option is very close 
+    to the initial stock price in order to maintain accuracy. The experiments will 
+    confirm that our algorithms obtain implied barriers and option prices fast and 
+    accurately even when the barrier is extremely close to the initial stock price.

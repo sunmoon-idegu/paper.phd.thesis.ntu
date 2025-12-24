@@ -8,6 +8,24 @@
 
 \begin{abstract*}
 
-Abstract
+    The implied barrier is the barrier that yields a default probability or 
+    reproduces a barrier option price. This thesis proposes a highly efficient 
+    algorithm based on the Black-Scholes model to find the implied barrier and proves 
+    its convergence rate. In particular, it presents an $O(n\,\text{log}\,n)$-time 
+    tree algorithm to find the implied step barrier, where $n$ denotes the tree’s 
+    number of time steps. Our algorithm is one order faster than the standard tree 
+    algorithm. This algorithm can be easily adapted to obtain the implied 
+    barrier when it is defined at discrete points, or to price various types of 
+    barrier options with accuracy. For the case of a constant barrier, the 
+    implied barrier is proved to converge to its true value at a rate of $O(n^{-1})$. 
+    Numerical experiments confirm this rate. The experiments also show that the 
+    implied step barrier converges at the same rate. The implied barrier can be seen 
+    as the default boundary that reproduces the default probabilities under a 
+    structural model. When the default probabilities are obtained from publicly 
+    available data, the implied barrier reflects the market consensus. Finally, we 
+    propose (1) a new binary default prediction scheme for publicly listed 
+    corporations and (2) a new evaluation scheme for binary default prediction 
+    schemes. The results show good performance for publicly listed U.S. companies 
+    during 1991--2023.
 
 \end{abstract*}

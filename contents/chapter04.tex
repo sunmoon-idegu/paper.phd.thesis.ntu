@@ -1,13 +1,525 @@
 % !TeX root = ../main.tex
 
-\chapter{英文測試}
+\chapter{Convergence Rates}\label{chap:convergence}
+    
+    This chapter provides the mathematical proof and the numerical results for the 
+    linear convergence rate of the implied barrier from the core algorithm. 
+    Section~\ref{sec:convergence-pd} proves that the default probability as 
+    calculated on the $n$-step BTT converges to the continuous-time limit at a rate 
+    of $O(n^{-1})$. Section~\ref{sec:convergence-ib} proves that, in the 
+    constant-barrier case, the implied barrier level converges to the true barrier 
+    level at a rate of $O(n^{-1})$. Section~\ref{sec:convergence-numerical} presents 
+    the corresponding numerical results. We also show the numerical results of the 
+    step-barrier case, which suggest a linear convergence rate as well. 
+    
+\section{Linear Convergence of the Default Probability}\label{sec:convergence-pd}
 
-\section{出師表}
+    For logarithmic stock price $x$ (which may depend on $n$) and time $t$, let 
+    $C^\text{BS}(x,t)$ denote the DODC's expected payoff under the BS model and 
+    $C^\text{BTT}_n(x,t)$ the DODC's expected payoff by the $n$-step BTT\@. Barrier 
+    is ignored in the notations for brevity. The convergence rate of the DODC's 
+    expected payoff by the CRR tree when the barrier passes through a terminal node 
+    is covered by the next result, implicit in Lin and Palmer's proof of their 
+    Theorem 1.2 (1)(b) \cite{Lin2013}.
 
-\lipsum
+    \begin{theorem}[\cite{Lin2013}]
+        The expected payoff $C^{\textup{CRR}}_n$ of a DODC in the $n$-step CRR tree with 
+        initial stock price $S_n$, strike price and barrier level equal to $H_n$, which  
+        is a node on the grid, and maturity $T_n$ satisfies 
+        $C^{\textup{CRR}}_n = C^{\textup{BS}} + O(n^{-1})$, where $C^{\textup{BS}}$ is 
+        the expected payoff of the same DODC under the BS model, provided that $S_n/H_n$ 
+        is bounded and $T_n\to T > 0$.
+        \label{theorem:ddoc}
+    \end{theorem}
+    
+    Let $P_\text{A}$, $P_\text{B}$, and $P_\text{C}$ be the survival probabilities on 
+    the $n$-step BTT at time $T$ as seen from the root node R's three successor nodes 
+    A, B, and C, respectively (recall Figure~\ref{fig:bino_tri_lattice_with_barrier}). 
+    By equations~(\ref{eq:pu})--(\ref{eq:pd}),
+    \begin{align}
+        C^{\text{BTT}}_n\left(s_\text{R},0\right)\quad &=\quad P_uP_\text{A} + P_mP_\text{B} + P_dP_\text{C} \label{eq:sur_prob_T_a} \\[10pt] 
+        %&=\quad \frac{\left(\beta-\sigma\sqrt{\Delta t}\right)^2}{8\sigma^2\Delta t}B_\text{A}\ +\ \frac{3\sigma^2\Delta t - \beta^2}{4\sigma^2\Delta t}B_\text{B}\ +\ \frac{\left(\beta+\sigma\sqrt{\Delta t}\right)^2}{8\sigma^2\Delta t}B_\text{C} \label{eq:sur_prob_T} \\[12pt]
+        &=\quad \frac{P_\text{A}-2P_\text{B}+P_\text{C}}{8\sigma^2\Delta t}\,\beta^2 +\frac{-P_\text{A}+P_\text{C}}{4\sigma\sqrt{\Delta t}}\,\beta +\frac{P_\text{A}+6P_\text{B}+P_\text{C}}{8} \label{eq:sur_prob_T_b}
+    \end{align}
+    after simplification. Note that $P_\text{A}$, $P_\text{B}$, and $P_\text{C}$ are 
+    independent of $\beta$ because (1) the transition probabilities of the CRR tree 
+    are and (2) the number of grid points between nodes A, B, C, and the barrier, respectively,
+    remain constant.
+    Recall that $s_z$ stands for the logarithmic stock price of node $z$. Define
+    \begin{align*}
+        C^\text{BS}_x    \quad&\equiv\quad \frac{\partial   C^\text{BS}(s_\text{R},0)}{\partial x}, \\[3pt]
+        C^\text{BS}_t    \quad&\equiv\quad \frac{\partial   C^\text{BS}(s_\text{R},0)}{\partial t}, \\[3pt]
+        C^\text{BS}_{xx} \quad&\equiv\quad \frac{\partial^2 C^\text{BS}(s_\text{R},0)}{\partial x^2},
+    \end{align*}
+    and note that 
+    \begin{align*}
+        s_\text{A} \quad&=\quad s_\text{R} + \alpha + \theta,  \\[3pt]
+        s_\text{B} \quad&=\quad s_\text{R} +  \beta + \theta,  \\[3pt]
+        s_\text{C} \quad&=\quad s_\text{R} + \gamma + \theta
+    \end{align*}
+    by equations~(\ref{eq:alpha})-(\ref{eq:gamma}). Thus 
+    \begin{align*}
+        P_\text{A}\quad &=\quad C^\text{BS}\left(s_\text{A}, \Delta t\right)\ +\ O(\Delta t) \\
+        &=\quad C^\text{BS}\left(s_\text{R}, 0\right)\ +\ C^\text{BS}_x\left(s_\text{A}-s_\text{R}\right)\ +\ C^\text{BS}_t\Delta t\ +\ \frac{C^\text{BS}_{xx}\left(s_\text{A}-s_\text{R}\right)^2}{2}\ +\ O(\Delta t) \\
+        &=\quad C^\text{BS}\left(s_\text{R}, 0\right)\ +\ C^\text{BS}_x(\alpha+\theta)\ +\ C^\text{BS}_t\,\Delta t\ +\ \frac{C^\text{BS}_{xx}\left(\alpha+\theta\right)^2}{2}\ +\ O(\Delta t) \numberthis \label{eq:BA}
+    \end{align*}
+    by Theorem~\ref{theorem:ddoc} (recall that the survival probability equals the 
+    expected payoff of the DODC) and the Taylor expansion around 
+    $\left(s_\text{R}, 0\right)$. Similarly,
+    \begin{align*}
+        P_\text{B}\quad &=\quad C^\text{BS}\left(s_\text{R}, 0\right)\ +\ C^\text{BS}_x(\beta+\theta)\ +\  C^\text{BS}_t\,\Delta t\ +\ \frac{C^\text{BS}_{xx}\left(\beta+\theta\right)^2}{2}\ +\ O(\Delta t), \numberthis \label{eq:BB} \\
+        P_\text{C}\quad &=\quad C^\text{BS}\left(s_\text{R}, 0\right)\ +\ C^\text{BS}_x(\gamma+\theta)\ +\ C^\text{BS}_t\,\Delta t\ +\ \frac{C^\text{BS}_{xx}\left(\gamma+\theta\right)^2}{2}\ +\ O(\Delta t). \numberthis \label{eq:BC}
+    \end{align*}
+    Finally, equation~(\ref{eq:sur_prob_T_a}) with the help of 
+    equations~(\ref{eq:mean})--(\ref{eq:probs}) and (\ref{eq:BA})--(\ref{eq:BC}) reduces to
+    \begin{align*}
+        C^{\text{BTT}}_n\left(s_\text{R},0\right)\quad &=\quad C^{\text{BS}}(s_\text{R},0) + \theta C^{\text{BS}}_x + C^{\text{BS}}_t \Delta t + \frac{1}{2}\,C^{\text{BS}}_{xx}\left(\theta^2 + \sigma^2\Delta t\right) + O(\Delta t)\\
+        &=\quad C^{\text{BS}}(s_\text{R},0) + O(\Delta t)
+    \end{align*}
+    as $\theta = O(\Delta t)$. We have proved that 
+    $C^{\text{BTT}}_n(s_\text{R},0) - C^\text{BS}(s_\text{R},0) = O(n^{-1})$ 
+    as $\Delta t = O(n^{-1})$. As default probability equals one minus the DODC's 
+    expected payoff, we have the first main theorem below.
+    \begin{theorem}
+        \normalfont \textit{The default probability as calculated on the $n$-step BTT 
+        converges to the continuous-time limit at a rate of} $O(n^{-1})$.
+        \label{theorem:ddoc_BTT}
+    \end{theorem}
 
-\section{短歌行}
+\section{Linear Convergence of the Implied Barrier}\label{sec:convergence-ib}
+    
+    The following simple lemma will be useful later.
+    \begin{lemma}\label{lemma:identical_BTT}
+        Label a BTT's terminal nodes at $T$ from bottom to top as $\text{N}_0$, 
+        $\text{N}_1$, $\ldots$, $\text{N}_{n+1}$. Consider two BTTs: one with 
+        $\beta = -\sigma\sqrt{\Delta t}$ and the barrier level is aligned with the 
+        terminal node $\text{N}_k$; and another with $\beta = \sigma\sqrt{\Delta t}$ 
+        and the barrier level is aligned with $\text{N}_{k-1}$. The probabilities of 
+        hitting the barrier are identical.
+    \end{lemma}
+    \begin{proof}
+        With $\beta = -\sigma\sqrt{\Delta t}$, the transition probabilities are 0.5, 0.5, 
+        and 0; with $\beta = \sigma\sqrt{\Delta t}$, the transition probabilities are 0, 
+        0.5, and 0.5. So seen from the root node, the two BTTs are identical when their 
+        barrier levels are as specified (see Figure~\ref{fig:proof_lemma}). 
+    \end{proof}
+    
+    \begin{figure}[!t]
+        \centering
+        \resizebox{0.45\textwidth}{!}{
+        \begin{tikzpicture}[myset/.list={(8,1),(7,2),(9,2),(11,2),
+              (6,3),(8,3),(10,3),(12,3),
+              (5,4),(7,4),(9,4),(11,4),(13,4),
+              (4,5),(6,5),(8,5),(10,5),(12,5),(14,5),
+              (3,6),(5,6),(7,6),(9,6),(11,6),(15,6)}, fillset/.list={(13,6)},
+              fontset/.list={(17,1),(17,2),(17,3),(17,4),(17,5),(17,6)},
+              left extended/.style={shorten <=-#1},
+              left extended/.default=1cm,
+              right extended/.style={shorten >=-#1},
+              right extended/.default=1cm]
+          \matrix (tree) [%
+            nodes in empty cells,
+            matrix of nodes,
+            nodes={anchor=center,minimum size=0.75cm},
+            column sep=1.5cm,
+            row sep=0.5cm,
+            ampersand replacement=\&
+          ]
+          {
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+              $|$ \& $|$ \& $|$ \& $|$ \& $|$ \& $|$ \\
+          };
+          \begin{pgfonlayer}{background}
+              \draw[line width=1mm, left extended] (tree-13-1) -- (tree-13-6);
+              \foreach \y in {1,...,6}{
+                  \draw[dashed, left extended, right extended] (tree-1-\y) -- (tree-15-\y);
+              }
+              \foreach \x in {1,2,3,4,6,8,10,11,12,13,14,15}{
+                  \draw[dashed, left extended, right extended] (tree-\x-2) -- (tree-\x-6);
+              }
+              \foreach \x in {5,7,9}{
+                  \draw[dashed, left extended=1.06cm, right extended] (tree-\x-2) -- (tree-\x-6);
+              }
+              \draw[fill=black,thick,opacity=0.2] (tree-8-1.center) -- (tree-3-6.center) -- (tree-13-6.center) -- cycle ;
+          \end{pgfonlayer}
+          \node[shift={(1cm,0.4cm)},font=\Large] at (tree-13-6) {$\text{N}_1$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-1) {$0$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-2) {$\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-3) {$2\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-4) {$3\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-5) {$4\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-6) {$5\Delta t$};
+          \node[below=1.2cm,font=\LARGE] at (tree-16-6) {$(=T)$};
+          \draw[-{Latex[length=2mm]}] (tree-8-1) -- (tree-7-2) node [midway,above=3mm,font=\LARGE] {$1/2$}; 
+          \draw[-{Latex[length=2mm]}] (tree-8-1) -- (tree-9-2) node [midway,below=1mm,font=\LARGE] {$1/2$}; 
+          \draw[dashed,-{Latex[length=2mm]}] (tree-8-1) -- (tree-11-2) node [midway,below,font=\LARGE] {$0$};
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-10-3); 
+          \draw[-{Latex[length=2mm]}] (tree-11-2) -- (tree-10-3); 
+          \draw[-{Latex[length=2mm]}] (tree-11-2) -- (tree-12-3); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-11-4); 
+          \draw[-{Latex[length=2mm]}] (tree-12-3) -- (tree-11-4); 
+          \draw[-{Latex[length=2mm]}] (tree-12-3) -- (tree-13-4); 
+          \draw[-{Latex[length=2mm]}] (tree-5-4) -- (tree-4-5); 
+          \draw[-{Latex[length=2mm]}] (tree-5-4) -- (tree-6-5); 
+          \draw[-{Latex[length=2mm]}] (tree-7-4) -- (tree-6-5); 
+          \draw[-{Latex[length=2mm]}] (tree-7-4) -- (tree-8-5); 
+          \draw[-{Latex[length=2mm]}] (tree-9-4) -- (tree-8-5); 
+          \draw[-{Latex[length=2mm]}] (tree-9-4) -- (tree-10-5); 
+          \draw[-{Latex[length=2mm]}] (tree-11-4) -- (tree-10-5); 
+          \draw[-{Latex[length=2mm]}] (tree-11-4) -- (tree-12-5); 
+          \draw[-{Latex[length=2mm]}] (tree-13-4) -- (tree-12-5); 
+          \draw[-{Latex[length=2mm]}] (tree-13-4) -- (tree-14-5); 
+          \draw[-{Latex[length=2mm]}] (tree-4-5) -- (tree-3-6); 
+          \draw[-{Latex[length=2mm]}] (tree-4-5) -- (tree-5-6); 
+          \draw[-{Latex[length=2mm]}] (tree-6-5) -- (tree-5-6); 
+          \draw[-{Latex[length=2mm]}] (tree-6-5) -- (tree-7-6); 
+          \draw[-{Latex[length=2mm]}] (tree-8-5) -- (tree-7-6); 
+          \draw[-{Latex[length=2mm]}] (tree-8-5) -- (tree-9-6); 
+          \draw[-{Latex[length=2mm]}] (tree-10-5) -- (tree-9-6); 
+          \draw[-{Latex[length=2mm]}] (tree-10-5) -- (tree-11-6); 
+          \draw[-{Latex[length=2mm]}] (tree-12-5) -- (tree-11-6); 
+          \draw[-{Latex[length=2mm]}] (tree-12-5) -- (tree-13-6); 
+          \draw[-{Latex[length=2mm]}] (tree-14-5) -- (tree-13-6); 
+          \draw[-{Latex[length=2mm]}] (tree-14-5) -- (tree-15-6); 
+          \draw (tree-16-1.mid) -- (tree-16-6.mid);
+        \end{tikzpicture}}
+        \hspace{0.05\textwidth}
+        \resizebox{0.45\textwidth}{!}{
+        \begin{tikzpicture}[myset/.list={(8,1),(5,2),(7,2),(9,2),
+              (4,3),(6,3),(8,3),(10,3),
+              (3,4),(5,4),(7,4),(9,4),(11,4),
+              (2,5),(4,5),(6,5),(8,5),(10,5),(12,5),
+              (1,6),(3,6),(5,6),(7,6),(9,6),(11,6)}, fillset/.list={(13,6)},
+              fontset/.list={(15,1),(15,2),(15,3),(15,4),(15,5),(15,6)},
+              left extended/.style={shorten <=-#1},
+              left extended/.default=1cm,
+              right extended/.style={shorten >=-#1},
+              right extended/.default=1cm]
+          \matrix (tree) [%
+            nodes in empty cells,
+            matrix of nodes,
+            nodes={anchor=center,minimum size=0.75cm},
+            column sep=1.5cm,
+            row sep=0.5cm,
+            ampersand replacement=\&
+          ]
+          {
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+                \&   \& \& \& \&   \\
+              $|$ \& $|$ \& $|$ \& $|$ \& $|$ \& $|$ \\
+          };
+          \begin{pgfonlayer}{background}
+              \draw[line width=1mm, left extended] (tree-13-1) -- (tree-13-6);
+              \foreach \y in {1,...,6}{
+                  \draw[dashed, left extended, right extended] (tree-1-\y) -- (tree-15-\y);
+              }
+              \foreach \x in {1,2,3,4,6,8,10,11,12,13,14,15}{
+                  \draw[dashed, left extended, right extended] (tree-\x-2) -- (tree-\x-6);
+              }
+              \foreach \x in {5,7,9}{
+                  \draw[dashed, left extended=1.06cm, right extended] (tree-\x-2) -- (tree-\x-6);
+              }
+              \draw[fill=black,thick,opacity=0.2] (tree-8-1.center) -- (tree-3-6.center) -- (tree-13-6.center) -- cycle;
+          \end{pgfonlayer}
+          \node[shift={(1cm,0.4cm)},font=\Large] at (tree-13-6) {$\text{N}_0$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-1) {$0$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-2) {$\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-3) {$2\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-4) {$3\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-5) {$4\Delta t$};
+          \node[below=0.5cm,font=\LARGE] at (tree-16-6) {$5\Delta t$};
+          \node[below=1.2cm,font=\LARGE] at (tree-16-6) {$(=T)$};
+          \draw[dashed,-{Latex[length=2mm]}] (tree-8-1) -- (tree-5-2) node [midway,above=3mm,font=\LARGE] {$0$}; 
+          \draw[-{Latex[length=2mm]}] (tree-8-1) -- (tree-7-2) node [midway,below=1mm,font=\LARGE] {$1/2$}; 
+          \draw[-{Latex[length=2mm]}] (tree-8-1) -- (tree-9-2) node [midway,below=2mm,font=\LARGE] {$1/2$};
+          \draw[-{Latex[length=2mm]}] (tree-5-2) -- (tree-4-3); 
+          \draw[-{Latex[length=2mm]}] (tree-5-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-6-3); 
+          \draw[-{Latex[length=2mm]}] (tree-7-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-8-3); 
+          \draw[-{Latex[length=2mm]}] (tree-9-2) -- (tree-10-3); 
+          \draw[-{Latex[length=2mm]}] (tree-4-3) -- (tree-3-4); 
+          \draw[-{Latex[length=2mm]}] (tree-4-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-5-4); 
+          \draw[-{Latex[length=2mm]}] (tree-6-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-7-4); 
+          \draw[-{Latex[length=2mm]}] (tree-8-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-9-4); 
+          \draw[-{Latex[length=2mm]}] (tree-10-3) -- (tree-11-4); 
+          \draw[-{Latex[length=2mm]}] (tree-3-4) -- (tree-2-5); 
+          \draw[-{Latex[length=2mm]}] (tree-3-4) -- (tree-4-5); 
+          \draw[-{Latex[length=2mm]}] (tree-5-4) -- (tree-4-5); 
+          \draw[-{Latex[length=2mm]}] (tree-5-4) -- (tree-6-5); 
+          \draw[-{Latex[length=2mm]}] (tree-7-4) -- (tree-6-5); 
+          \draw[-{Latex[length=2mm]}] (tree-7-4) -- (tree-8-5); 
+          \draw[-{Latex[length=2mm]}] (tree-9-4) -- (tree-8-5); 
+          \draw[-{Latex[length=2mm]}] (tree-9-4) -- (tree-10-5); 
+          \draw[-{Latex[length=2mm]}] (tree-11-4) -- (tree-10-5); 
+          \draw[-{Latex[length=2mm]}] (tree-11-4) -- (tree-12-5); 
+          \draw[-{Latex[length=2mm]}] (tree-2-5) -- (tree-1-6); 
+          \draw[-{Latex[length=2mm]}] (tree-2-5) -- (tree-3-6); 
+          \draw[-{Latex[length=2mm]}] (tree-4-5) -- (tree-3-6); 
+          \draw[-{Latex[length=2mm]}] (tree-4-5) -- (tree-5-6); 
+          \draw[-{Latex[length=2mm]}] (tree-6-5) -- (tree-5-6); 
+          \draw[-{Latex[length=2mm]}] (tree-6-5) -- (tree-7-6); 
+          \draw[-{Latex[length=2mm]}] (tree-8-5) -- (tree-7-6); 
+          \draw[-{Latex[length=2mm]}] (tree-8-5) -- (tree-9-6); 
+          \draw[-{Latex[length=2mm]}] (tree-10-5) -- (tree-9-6); 
+          \draw[-{Latex[length=2mm]}] (tree-10-5) -- (tree-11-6); 
+          \draw[-{Latex[length=2mm]}] (tree-12-5) -- (tree-11-6); 
+          \draw[-{Latex[length=2mm]}] (tree-12-5) -- (tree-13-6); 
+          \draw (tree-16-1.mid) -- (tree-16-6.mid); 
+        \end{tikzpicture}}                                                                   
+        \caption{Two identical BTTs: $\beta = -\sigma\sqrt{\Delta t}$ (left) and 
+                 $\beta = \sigma\sqrt{\Delta t}$ (right). The thick black lines
+                 indicate the barriers.}
+        \label{fig:proof_lemma}
+    \end{figure}
+    
+    %\begin{figure}[!t]
+    %    \centering
+    %    \includegraphics[width=0.47\textwidth]{./figures/binary1.pdf}
+    %    \includegraphics[width=0.47\textwidth]{./figures/binary2.pdf}
+    %    \caption{The default probability as a concave quadratic function of $\beta$.
+    %             The function value starts at $p_i$ and ends at $p_{i+1}$ by Lemma~\ref{lemma:identical_BTT}.
+    %             The function's maximum may occur before (the left panel) or after
+    %             (the right panel) $\sigma\sqrt{\Delta t}$.
+    %             }
+    %    \label{fig:lemma1}
+    %\end{figure}
 
-\lipsum
+    The following identities are clear from equations~(\ref{eq:alpha})--(\ref{eq:gamma}):
+    \begin{align}
+        \alpha - \gamma               \quad &= \quad 4\sigma\sqrt{\Delta t}, \numberthis \label{eq:alpha-gamma} \\[3pt]
+        \alpha - 2\beta + \gamma      \quad &= \quad 0,                      \numberthis \label{eq:alphal+gamma-2beta} \\[3pt]
+        \alpha^2 - 2\beta^2 + \gamma^2\quad &= \quad 8\sigma^2\Delta t.      \numberthis \label{eq:alpha2+gamma2-2beta2}
+    \end{align}
+    Equation~(\ref{eq:sur_prob_T_b}) with the help of 
+    equations~(\ref{eq:alpha})--(\ref{eq:gamma}) and 
+    (\ref{eq:BA})--(\ref{eq:alpha2+gamma2-2beta2}) becomes
+    \begin{align*}
+        &C^{\text{BTT}}_n(s_\text{R},0) \\[10pt]
+        =\quad &\frac{C^\text{BS}_{xx}\sigma^2\Delta t+O(\Delta t)}{2\sigma^2\Delta t}\,\beta^2 -\frac{\sigma\sqrt{\Delta t}\left(C^\text{BS}_x+C^\text{BS}_{xx}\hat\theta\right)+O(\Delta t)}{\sigma\sqrt{\Delta t}}\,\beta +\frac{P_\text{A}+6P_\text{B}+P_\text{C}}{8}. \numberthis \label{eq:CDO_new}
+    \end{align*}
+    \begin{lemma}
+        The expected payoff of a DODC by the BTT is a quadratic function of $\beta$. 
+        Furthermore, the coefficient of $\beta^2$ and $\beta$ are $O(1)$, and the 
+        $\beta$ term dominates the $\beta^2$ term in magnitude.
+        \label{lemma:beta_coefficients}
+    \end{lemma}
+    \begin{proof}
+        The expected payoff is quadratic in $\beta$ by equation~(\ref{eq:sur_prob_T_b}). 
+        The coefficients of $\beta^2$ and $\beta$ equal $C^\text{BS}_{xx}/2 + O(1)$ and 
+        $-C^\text{BS}_x - C^\text{BS}_{xx}\hat\theta + O(\sqrt{\Delta t})$, respectively, 
+        by equation~(\ref{eq:CDO_new}). Both coefficients are $O(1)$ because 
+        $\hat\theta = O(\sqrt{\Delta t})$ and $C^\text{BS}_x$ and $C^\text{BS}_{xx}$ are 
+        bounded. Furthermore, the coefficient of $\beta$ approaches $-C^\text{BS}_x$, 
+        which is negative and bounded away from zero. The $\beta$ term dominates the 
+        $\beta^2$ term in magnitude because $\beta^2 \ll \beta$ for
+        $\beta = O(\sqrt{\Delta t})$.
+    \end{proof}
+        
+    Let $Q_k$ be the DODC's expected payoff by the $n$-step BTT with 
+    $\beta = -\sigma\sqrt{\Delta t}$ when terminal node $\text{N}_k$ is the barrier 
+    level (recall Figure~\ref{fig:algor_part_1}). Note that $Q_k = 1 - p_k$ and
+    $Q_0 > Q_1 > \cdots$ until the expected payoff reaches zero, where it stays. We 
+    are now in a position to prove the main result: The exact implied barrier level 
+    differs from the true barrier level by $O(n^{-1})$.
+    \begin{theorem}
+        The exact implied barrier level by the $n$-step BTT differs from the true 
+        barrier level by $O(n^{-1})$.
+        \label{theorem:constant_barrier_convergence}
+    \end{theorem}
+    \begin{proof}
+        Let $p$ be the default probability. Denote the logarithmic value of the exact 
+        implied barrier level by $b^{\text{imp}}_n$ and the true logarithmic barrier level 
+        by $b^{\text{true}}$, respectively. Note that $b^{\text{true}}$ is a constant and 
+        below the initial stock price by our convention. Although the goal is 
+        $e^{b^{\text{imp}}_n} - e^{b^{\text{true}}} = O(n^{-1})$, it suffices to prove 
+        $b^{\text{imp}}_n - b^{\text{true}} = O(n^{-1})$ because, then, 
+        \begin{equation*}
+            e^{b^{\text{imp}}_n} - e^{b^{\text{true}}}\ =\ e^{b^{\text{imp}}_n}\left(1 - e^{b^{\text{true}}-b^{\text{imp}}_n}\right)\ \approx\ e^{b^{\text{imp}}_n}\left(b^{\text{imp}}_n-b^{\text{true}}\right),
+        \end{equation*}
+        which converges to zero at a speed of $n^{-1}$.
 
-This is just to test \cite{Krasnogor2004e} the cite function.
+        The DODC's expected payoff $q^{\text{imp}}_n$ induced by $b^{\text{imp}}_n$ on the 
+        $n$-step BTT equals $1-p$ as $b^{\text{imp}}_n$ is exact. Assume the algorithm for 
+        the implied barrier ends with $\beta = \beta'$. Let $q^{\text{true}}$ denote the 
+        DODC's expected payoff induced by $b^{\text{true}}$ on the $n$-step BTT which
+        ends with $\beta = \beta''$. 
+        %The scenario of $q = q_{\text{true}}$ is trivial 
+        %because they give rise to the same BTT if the initial stock price is the 
+        %same, which yields an exact implied barrier level equal to the true barrier 
+        %level by definition. 
+        Without loss of generality, assume $q^{\text{imp}}_n \geq q^{\text{true}}$; the 
+        argument is symmetric if $q^{\text{imp}}_n \leq q^{\text{true}}$. Recall that the 
+        default probability equals one minus the DODC's expected payoff. 
+        Theorem~\ref{theorem:ddoc_BTT} says
+        \begin{equation}
+            q^{\text{imp}}_n - q^{\text{true}}\ =\ O\left(n^{-1}\right).
+            \label{eq:qq_imp_true}
+        \end{equation}
+        Let
+        \begin{alignat*}{2}
+            Q_{i+1}\quad &\leq \quad q^{\text{imp}}_n \quad &&< \quad Q_i,\\[3pt]
+            Q_{j+1}\quad &\leq \quad q^{\text{true}}  \quad &&< \quad Q_j. 
+        \end{alignat*}
+        Because $q^{\text{imp}}_n \geq q^{\text{true}}$, there are three cases to 
+        consider: (1) $i = j$, (2) $i+1 = j$, and (3) $i+1 < j$.
+        
+        For case (1), 
+        \begin{equation*}
+            b^{\text{true}} - b^{\text{imp}}_n\ =\ \beta'' - \beta'\ 
+        \end{equation*}
+        (see Figure~\ref{fig:case1}). Therefore
+        \begin{equation*}
+            \left\vert\,b^{\text{imp}}_n - b^{\text{true}}\,\right\vert\ =\ O\left(q^{\text{imp}}_n - q^{\text{true}}\right)\ =\ O\left(n^{-1}\right),
+        \end{equation*}
+        as desired, by equation~(\ref{eq:qq_imp_true}) and Lemma~\ref{lemma:beta_coefficients}.
+        For case (2), 
+        \begin{equation*}
+            Q_{i+2}\ \leq\ q^\text{true}\ <\ Q_{i+1}\ \leq\ q^\text{imp}_n\ <\ Q_{i};
+            \label{eq:case2}
+        \end{equation*}
+        hence it is necessary that 
+        \begin{align*}
+            q^{\text{imp}}_n - Q_{i+1}\ =\ O\left(n^{-1}\right), \\[3pt]
+            Q_{i+1} - q^{\text{true}} \ =\ O\left(n^{-1}\right)
+        \end{align*}
+        by equation~(\ref{eq:qq_imp_true}) (see Figure~\ref{fig:case2}).
+        \begin{figure}[!t]
+            \centering
+            \includegraphics[width=\textwidth]{./figures/case1.pdf}
+            \caption{Relations among the six quantities $Q_i$, $Q_{i+1}$, $q^{\text{imp}}_n$,
+                     $q^{\text{true}}$, $\beta'$ and $\beta''$ for case (1).}
+            \label{fig:case1}
+        \end{figure}
+        Apply the same argument as in case (1) to obtain, separately,
+        \begin{align*}
+            \left\vert\,b^{\text{imp}}_n - \text{N}_{i+1}\,\right\vert\ &=\ O\left(q^{\text{imp}}_n - Q_{i+1}\right)\ =\ O\left(n^{-1}\right), \\[3pt]
+            \left\vert\,b^{\text{true}}  - \text{N}_{i+1}\,\right\vert\ &=\ O\left(q^{\text{true}}  - Q_{i+1}\right)\  =\ O\left(n^{-1}\right).
+        \end{align*}
+        Finally, 
+        \begin{equation*}
+            \left\vert\,b^{\text{imp}}_n - b^{\text{true}}\,\right\vert\ \leq\ \left\vert\,b^{\text{imp}}_n - \text{N}_{i+1}\,\right\vert + \left\vert\,\text{N}_{i+1} - b^{\text{true}}\,\right\vert\ =\ O\left(n^{-1}\right),
+        \end{equation*}
+        as desired. For case (3),
+        \begin{equation*}
+            q^\text{true}\ <\ Q_{j}\ <\ Q_{i+1} \leq\ q^\text{imp}_n.
+        \end{equation*}
+        The above inequalities imply 
+        $q^{\text{imp}}_n - q^{\text{true}} > Q_{i+1} - Q_{j}$, which is of order
+        $n^{-0.5}$ for a constant barrier level, contradicting equation~(\ref{eq:qq_imp_true}).
+        
+        \begin{figure}[!t]
+            \centering
+            \includegraphics[width=\textwidth]{./figures/case2.pdf}
+            \caption{Relations among the five quantities $Q_i$, $Q_{i+1}$, $Q_{i+2}$,
+                     $q^{\text{imp}}_n$, and $q^{\text{true}}$ for case (2).}
+            \label{fig:case2}
+        \end{figure}
+        
+    \end{proof}
+
+\section{Numerical Results}\label{sec:convergence-numerical}
+
+    The first experiment employs the $n$-step BTT to calculate the expected payoff of 
+    a DODC --- equivalently, one minus the default probability --- for 
+    $n = 3, 5, \ldots, 101$. The initial stock price is one dollar, the barrier level 
+    is 0.9, the return rate is 10\%, the volatility is 25\%, and the time to maturity 
+    is one year. We compare our numbers with 0.407, which is obtained by the
+    \citetalias{ReinerRubinstein1991} formula. The left panel of 
+    Figure~\ref{fig:price_barrier_convergence} plots the DODC's expected payoffs; the 
+    right panel plots the corresponding absolute errors. The convergence rate is 
+    clearly linear, consistent with Theorem~\ref{theorem:ddoc_BTT}.
+    
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = 0.485\textwidth]{figures/experiment_expected_payoff_9.pdf}
+        \includegraphics[width = 0.475\textwidth]{figures/experiment_expected_payoff_error_9.pdf}
+        \caption{The expected payoff of a DODC and its absolute error when the barrier level is 0.9.}
+        \label{fig:price_barrier_convergence}
+    \end{figure*}
+    
+    The second experiment calculates the implied barrier by the $n$-step BTT\@. The 
+    parameters are the same as above except that the expected payoff 0.407 is given 
+    in place of the barrier level. The left panel of 
+    Figure~\ref{fig:barrier_convergence} plots the implied barriers; the right panel 
+    plots the absolute errors of the implied barrier levels from 0.9. The convergence 
+    rate is again linear, consistent with 
+    Theorem~\ref{theorem:constant_barrier_convergence}. 
+
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = 0.485\textwidth]{figures/experiment_implied_barrier_9.pdf}
+        \includegraphics[width = 0.475\textwidth]{figures/experiment_implied_barrier_error_9.pdf}
+        \caption{The implied barrier level and its absolute error from the true barrier level 0.9.}
+        \label{fig:barrier_convergence}
+    \end{figure*}
+    
+    %The BTT-based algorithms of Lu and Lyuu work for the more complex step barriers. 
+    It is interesting to see how fast the expected payoff and the implied step 
+    barrier converge even in the absence of proofs. We focus on the implied step 
+    barrier as it is built upon the expected payoff and therefore cannot better the 
+    latter's convergence rate. By concatenating twelve equal-length (thus each one 
+    month long) contiguous barriers at the same level 0.9, we effectively create a 
+    constant-barrier case for which Reiner and Rubinstein’s closed-form formula again 
+    applies. The algorithm, of course, treats the barrier as a step barrier not as 
+    one single constant barrier. The parameters are otherwise the same as above. 
+    (A similar setup was used in Figure~\ref{fig:step_barrier_convergence}.) The 
+    left panel of Figure~\ref{fig:implied_step_barrier} shows the implied step 
+    barriers obtained for $n = 36, 156, 396, 1212$\@. The implied step barriers 
+    converge to the true barrier as $n$ increases. The right panel of 
+    Figure~\ref{fig:implied_step_barrier} plots the maximum absolute errors of the 
+    implied step barriers from 0.9 for $n = 36, 60, \ldots, 1212$. The maximum 
+    absolute errors by treating the step barrier as one constant barrier are 
+    superimposed for a quick comparison. Both exhibit a linear convergence rate. 
+    The larger error in the step-barrier version compared with the constant-barrier 
+    version can be explained by the fact that each of its twelve barrier levels 
+    receives only one-twelfth as many time steps as the constant-barrier version.
+
+    \begin{figure*}[!t]
+    \centering
+        \includegraphics[width = 0.485\textwidth]{figures/experiment_step_barrier_convergence_0.9.pdf}
+        \includegraphics[width = 0.475\textwidth]{figures/experiment_step_barrier_absolute_error_0.9.pdf}
+        \caption{The implied step barrier and its maximum absolute error when the true step barrier 
+                 consists of twelve consecutive identical barrier levels at 0.9. 
+                 The absolute error by treating the step barrier as one single constant barrier 
+                 is also plotted for comparison (the right panel).}
+        \label{fig:implied_step_barrier}
+    \end{figure*}

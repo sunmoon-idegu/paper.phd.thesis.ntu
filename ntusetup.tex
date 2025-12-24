@@ -7,19 +7,19 @@
 \ntusetup{
   university*   = {National Taiwan University},
   university    = {國立臺灣大學},
-  college       = {工學院},
-  college*      = {College of Engineering},
-  institute     = {工業工程學研究所},
-  institute*    = {Department of Industrial Engineering}, % 請確認您的科系為Department of xxx或Institute of xxx
-  title         = {國立臺灣大學碩博士畢業論文模版},
-  title*        = {National Taiwan University (NTU) \\ Thesis/Dissertation Template in \LaTeX},
-  author        = {彭新翔},
-  author*       = {Hsin-Hsiang Peng},
-  ID            = {R05546030},
-  advisor       = {吳文方},
-  advisor*      = {Wen-Fang Wu},
-  date          = {2020-05-01},         % 若註解掉，則預設為當天
-  oral-date     = {2020-05-01},         % 若註解掉，則預設為當天
+  college       = {電機資訊學院},
+  college*      = {College of Electrical Engineering and Computer Science},
+  institute     = {資訊工程學研究所},
+  institute*    = {Department of Computer Science \& Information Engineering}, % 請確認您的科系為Department of xxx或Institute of xxx
+  title         = {國立臺灣大學博士畢業論文},
+  title*        = {National Taiwan University (NTU) \\ Dissertation},
+  author        = {盧與明},
+  author*       = {Yu-Ming Lu},
+  ID            = {D08922008},
+  advisor       = {呂育道},
+  advisor*      = {Yuh-Dauh Lyuu},
+  date          = {2025-12-16},         % 若註解掉，則預設為當天
+  oral-date     = {2025-12-16},         % 若註解掉，則預設為當天
   DOI           = {10.5566/NTU2018XXXXX},
   keywords      = {LaTeX, 中文, 論文, 模板},
   keywords*     = {LaTeX, CJK, Thesis, Template},
@@ -46,3 +46,154 @@
 % --------------------------------------------------
 % 套件設定（Packages Settings）
 % --------------------------------------------------
+
+%\usepackage{fontspec}
+%\setmainfont{Times New Roman}
+
+%\usepackage{fancyhdr} % Package for custom headers and footers
+%\setlength{\headheight}{15pt}
+
+%\pagestyle{fancy}
+%\fancyhead{}
+%\fancyhead[LE,RO]{\textit{\nouppercase{\rightmark}}}
+%\fancyfoot[C]{\thepage}  % Center the page number at the bottom
+
+%\usepackage{setspace}               % Line height
+%\doublespacing
+
+\usepackage{hyperref}               % Reference
+%\usepackage[natbibapa]{apacite}     % Reference
+
+%\usepackage{indentfirst}            % Indent the first line
+\usepackage{amsmath}                % Math symbol in text
+\usepackage{bbm}                    % \mathbbm
+\usepackage{stmaryrd} 
+\usepackage{graphicx}               % Graphic
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{booktabs}  
+\usepackage{empheq}
+\usepackage{multirow}               % for table
+
+\usepackage{etoolbox}
+\pretocmd{\chapter}{\cleardoublepage}{}{}
+\usepackage{titlesec}
+\titleformat{\chapter}{\normalfont\huge\bfseries}{Chapter \thechapter:}{1em}{}
+
+%\usepackage[normalem]{ulem}         % for line cross
+\usepackage{cancel}
+
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}       % Theorem
+\newtheorem{lemma}{Lemma}
+
+\usepackage{siunitx}                % Scientific notation \num
+
+\usepackage{algorithm}
+\usepackage{algpseudocode} 
+
+\usepackage{moresize}
+\usepackage{anyfontsize}
+\newcommand\YUGE{\fontsize{33}{45}\selectfont}
+
+\raggedbottom
+
+\usepackage[title,titletoc]{appendix}
+%\makeatletter
+
+%\BeforeBeginEnvironment{appendices}{\clearpage}
+
+\usepackage{tikz}
+\usetikzlibrary{backgrounds, matrix, arrows.meta, positioning, fadings}
+\tikzfading[name=myfading, bottom color=transparent!99, top color=transparent!90]
+\tikzset{myset/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={draw,circle,minimum size=0.75cm,fill=white,font=\large,anchor=center}}}}
+\tikzset{big_circles/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={draw,circle,minimum size=1.2cm,fill=white,font=\LARGE,anchor=center}}}}
+\tikzset{very_big_circles/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={draw,circle,minimum size=1.5cm,fill=white,font=\huge,anchor=center}}}}
+\tikzset{fillset/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={draw,circle,minimum size=0.75cm,fill=black,anchor=center}}}}
+\tikzset{big_fillset/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={draw,circle,minimum size=1.2cm,fill=black,font=\LARGE,anchor=center}}}}
+\tikzset{fontset/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={minimum size=0.75cm,font=\large,anchor=center}}}}
+\tikzset{big_fontset/.style args = {(#1,#2)}{%
+    row #1 column #2/.style={nodes={minimum size=0.75cm,font=\LARGE,anchor=center}}}}
+
+
+\usepackage{pgfplots}
+\pgfplotsset{every axis/.append style={
+    axis x line=middle,    % put the x axis in the middle
+    axis y line=middle,    % put the y axis in the middle
+    axis line style={-{Latex}}, % arrows on the axis
+    xlabel={Time},          % default put x on x-axis
+    ylabel={Barrier level},          % default put y on y-axis
+    every axis x label/.style={at={(current axis.right of origin)},anchor=west,font=\small},
+    every axis y label/.style={at={(current axis.above origin)},anchor=south,font=\small}
+},
+line/.style={color=black,mark=none,line width=1pt,<->},
+solid/.style={color=black,only marks,mark=*},
+hollow/.style={color=black,fill=white,only marks,mark=*},
+}
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+\begin{filecontents}{BS.bib}
+@article{BS,
+    author  = {Black, Fischer and Scholes, Myron},
+    title   = "{The Pricing of Options and Corporate Liabilities}",
+    journal = {Journal of Political Economy},
+    volume  = {81},
+    number  = {3},
+    pages   = {637--654},
+    year    = {1973},
+    %month   = {05-06},
+    %url     = {https://www.jstor.org/stable/1831029}
+}
+\end{filecontents}
+\defcitealias{BS}{Black and Scholes's (BS) (1973)}
+
+\begin{filecontents}{CRR.bib}
+    @article{CRR,
+    author  = {Cox, John C. and Ross, Stephen A. and Rubinstein, Mark},
+    title   = "{Option Pricing: A Simplified Approach}",
+    journal = {Journal of Financial Economics},
+    year    = {1979},
+    volume  = {7},
+    number  = {3},
+    pages   = {229--263},
+    %url     = "http://www.sciencedirect.com/science/article/pii/0304405X79900151",
+    }
+\end{filecontents}
+\defcitealias{CRR}{Cox, Ross, and Rubinstein (CRR) (1979)}
+
+\begin{filecontents}{Brockman2003.bib}
+@article{Brockman2003,
+    author  = {Brockman, Paul and Turtle, H. J.},
+    title   = "{A Barrier Option Framework for Corporate Security Valuation}",
+    journal = {Journal of Financial Economics},
+    volume  = {67},
+    number  = {3},
+    pages   = {511--529},
+    year    = {2003},
+    %month   = {03},
+    %url     = {https://www.sciencedirect.com/science/article/pii/S0304405X0200260X}
+}
+\end{filecontents}
+\defcitealias{Brockman2003}{Brockman and Turtle's (2003)}
+
+\begin{filecontents}{ReinerRubinstein1991.bib}
+@article{ReinerRubinstein1991,
+    author  = {Reiner, E. and Rubinstein, M.},
+    title   = "{Unscrambling the Binary Code}",
+    journal = {Risk},
+    volume  = {4},
+    number  = {9},
+    pages   = {75--83},
+    year    = {1991},
+    %month   = {06}
+}
+\end{filecontents}
+\defcitealias{ReinerRubinstein1991}{Reiner and Rubinstein's (1991)}

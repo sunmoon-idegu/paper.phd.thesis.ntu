@@ -1,47 +1,499 @@
 % !TeX root = ../main.tex
 
-\chapter{中國文學}
+\chapter{Introduction}\label{chap:introduction}
 
-\section{出師表}
+\section{Background and Motivations}\label{sec:introduction-background}
 
-\begingroup
-\centering
+    Many real-world systems operate under uncertainty and often exhibit significant 
+    changes when certain thresholds are crossed. These thresholds can mark the 
+    transition from normalcy to failure, from equilibrium to instability, or from 
+    solvency to insolvency. When such thresholds are exerted over a period of time, 
+    either continuously or at discrete time points, they are called barriers. 
+    Barriers play a critical role in understanding the dynamics of real-world systems 
+    because they govern when and how significant changes occur abruptly 
+    (see~\cite{Scheffer2009} and \cite{SchefferNature2009}). When barriers are 
+    latent, accurately and efficiently obtaining them is essential to preventing 
+    irreversible system transitions, supporting early-warning mechanisms, and 
+    enhancing overall decision-making under uncertainty.
 
-\begin{tabular}{ll}
-What & is \\
-this & doing? \\
-\end{tabular}
-\captionsetup{type=table}
-\captionof{table}{A nice table}\label{tbl:nicetablelesstable}
-\endgroup
+    This thesis focuses on barriers in credit analysis (see~\cite{Duffie2003} and 
+    \cite{Lando2004}). Specifically, we examine the barrier that separates a 
+    company's creditworthy status from the onset of a credit event. It is called the 
+    default boundary. In practice, the default boundary itself is not directly 
+    observable (see~\cite{Dionne2012}). Instead, financial indicators such as asset 
+    value, leverage ratio, or working capital are commonly monitored for 
+    deteriorating financial conditions (see~\cite{Altman1968}). When an indicator 
+    falls to a critical level, the company may become unable to meet its 
+    obligations, resulting in a credit event. For instance, a significant decrease in 
+    asset value relative to debt can weaken creditors' confidence and raise the 
+    borrowing cost. As another example, a substantial reduction in working capital, 
+    such as declining cash reserves or rising short-term payables, may force the 
+    company to seek emergency funding under unfavorable terms. These scenarios 
+    illustrate how disappointing financial indicators can lead to deteriorating 
+    credit quality, which may result in credit events such as debt restructuring or 
+    even bankruptcy. In such cases, the default boundary is crossed. 
 
-臣亮言：先帝創業未半，而中道崩殂。今天下三分，益州疲弊，此誠危急存亡之秋也。然侍衛之臣，不懈於內；忠志之士，忘身於外者，蓋追先帝之殊遇，欲報之於陛下也。誠宜開張聖聽，以光先帝遺德，恢弘志士之氣；不宜妄自菲薄，引喻失義，以塞忠諫之路也。宮中府中，俱為一體，陟罰臧否，不宜異同。若有作姦犯科，及為忠善者，宜付有司，論其刑賞，以昭陛下平明之治，不宜篇私，使內外異法也。\par
+    A company's default boundary is heavily influenced by its liability structure, 
+    which involves many kinds of obligations such as debt, taxes, and accounts 
+    payable (see~\cite{Liu2016}). Straight bonds have clear payment schedules and 
+    fixed maturity dates. If a company's cash is insufficient to meet the required 
+    payments, default can occur. Debts with embedded options or redemption features 
+    do not even have well-defined maturities, which introduces uncertainty about the 
+    timing and size of future obligations (see~\cite{Ian2007}). Debt issues 
+    furthermore interact with each other to complicate the default boundary 
+    (see~\cite{Wang2014}). As for taxes, a change in corporate tax rates can 
+    significantly alter the present value of the interest-tax shield and therefore 
+    affect a company's leverage ratio (see~\cite{Graham2000}). Altogether, these 
+    factors show how a company's liability structure influences its default boundary. 
 
-侍中、侍郎郭攸之、費褘、董允等，此皆良實，志慮忠純，是以先帝簡拔以遺陛下。愚以為宮中之事，事無大小，悉以咨之，然後施行，必能裨補闕漏，有所廣益。將軍向寵，性行淑均，曉暢軍事，試用於昔日，先帝稱之曰「能」，是以眾議舉寵為督。愚以為營中之事，悉以咨之，必能使行陣和睦，優劣得所。親賢臣，遠小人，此先漢所以興隆也；親小人，遠賢臣，此後漢所以傾頹也。先帝在時，每與臣論此事，未嘗不歎息痛恨於桓、靈也。侍中、尚書、長史；參軍，此悉貞良死節之臣也，願陛下親之信之，則漢室之隆，可計日而待也。
+    The default boundary can also be influenced by strategic considerations. 
+    Theoretically, a company is considered solvent if its assets exceed its 
+    liabilities because it can, in principle, liquidate its assets to repay its 
+    liabilities. But a company's equity holders may choose to default strategically 
+    even when the company's assets suffice to cover its liabilities 
+    (see~\cite{AndersonSundaresanTychon1996}). This is because default may confer 
+    certain advantages over the repayment of debts. For example, when a company is in 
+    distress, the equity holders may threaten to file for bankruptcy in order to 
+    renegotiate the terms of its debt. While debt holders are eligible to seize the 
+    company's assets upon default, this process is costly and time-consuming, which 
+    weakens the debt holders' bargaining position. As a result, the equity holders 
+    may be able to negotiate a lower interest rate or even a partial cancellation. 
+    %These complexities make it nontrivial to determine a default boundary. 
 
-臣本布衣，躬耕於南陽，苟全性命於亂世，不求聞達於諸侯。先帝不以臣卑鄙，猥自枉屈，三顧臣於草廬之中，諮臣以當世之事，由是感激，遂許先帝以驅馳。後值傾覆，受任於敗軍之際，奉命於危難之間，爾來二十有一年矣！先帝知臣謹慎，故臨崩寄臣以大事也。受命以來，夙夜憂勤，恐託付不效，以傷先帝之明。故五月渡瀘，深入不毛。今南方已定，兵甲已足，當獎率三軍，北定中原，庶竭駑鈍，攘除奸凶，興復漢室，還於舊都；此臣所以報先帝而忠陛下之職分也。至於斟酌損益，進盡忠言，則攸之、褘、允之任也。
+    Given that the default boundary is not directly observable and is influenced by 
+    multiple interacting factors, inferring this boundary from data becomes an 
+    attractive alternative (see~\cite{Avellaneda2001} and \cite{Hull2001}). The 
+    resulting default boundary is called the \emph{implied} barrier by 
+    \cite{Brockman2003}, which is the main topic of this thesis. When the implied 
+    barrier is obtained from publicly available data, it reflects market consensus. 
+    This thesis will obtain the implied barrier from publicly available default 
+    probabilities, which refer to the probabilities that a company will default over 
+    periods of time. Specifically, the implied barrier is the default boundary that 
+    reproduces the default probabilities under a structural model. 
 
-願陛下託臣以討賊興復之效；不效，則治臣之罪，以告先帝之靈。若無興德之言，則戮允等，以彰其慢。陛下亦宜自課，以諮諏善道，察納雅言，深追先帝遺詔，臣不勝受恩感激。
+    Structural models are a class of credit risk models based on the option-pricing 
+    framework; as a result, corporate securities are contingent claims on a company's 
+    assets (see~\cite{Lando2004}). While initially developed to price corporate 
+    liabilities, structural models offer an economic framework for credit analysis. 
+    These models make three assumptions: (1) the company's asset value follows a 
+    stochastic process, (2) default occurs if the asset value drops to a default 
+    boundary, and, if implicitly, (3) the default boundary is a function of asset 
+    value and time. 
 
-今當遠離，臨表涕泣，不知所云。
+    The first structural model is proposed by \cite{Merton1974}. He assumes a 
+    company's asset value follows a geometric Brownian motion and that it has only 
+    zero-coupon bonds (ZCBs) with the same maturity as the liabilities. In Merton's 
+    model, default occurs when the asset value falls to the total face value of the 
+    ZCBs at their maturity. The framework can be extended to any debt 
+    structure in principle.
+    
+    In reality, companies can default anytime, contrary to Merton's assumption. 
+    \cite{FPM} address this issue by proposing a first-passage-time structural model. 
+    They specify default as the \emph{first} time the asset value touches the 
+    default boundary. Like Merton, they assume the company holds same-maturity 
+    ZCBs but now with safety covenants. The covenants provide bondholders with the 
+    right to initiate bankruptcy proceedings or enforce a reorganization if they are 
+    violated. Therefore, the safety covenants give rise to the default boundary.
 
-\section{短歌行}
+    The determination and, when applicable, the functional form of the default 
+    boundary play a critical role in structural models. Before delving into our 
+    approach, it is useful to examine how default boundaries are typically handled 
+    within structural models. One common approach is to consider the book value of 
+    the outstanding liabilities and assume a parametric form. The simplest form is a 
+    constant default boundary (see~\cite{Kim1993}, \cite{Leland1996}, 
+    \cite{Brockman2003}, and \cite{KMV}). However, a constant default boundary can be 
+    internally inconsistent. Consider $p(t_1)$ and $p(t_2)$ as the cumulative 
+    probabilities of a company defaulting at or before times $t_1$ and $t_2$, 
+    respectively, where $t_1 < t_2$. They are likely to result in two different 
+    levels of default boundary $b_1$ and $b_2$, respectively, where $b_1$ covers the 
+    time from now through $t_1$ whereas $b_2$ covers the time from now through the 
+    later $t_2$. So the period from now to time $t_1$ is associated with two 
+    different levels. Other than the constant default boundary, the exponential 
+    default boundary is also popular (see~\cite{FPM}, \cite{Longstaff1995}, and 
+    \cite{Zhou2000}). Instead of assuming a parametric form, 
+    \cite{AndersonSundaresan1996} apply game theory to endogenously determine the 
+    default boundary. Their default boundary is the equilibrium of a game in which 
+    equity holders and debt holders interact strategically. 
+    
+    As mentioned above, this thesis infers the default boundary from publicly 
+    available default probabilities under a structural model; this boundary is the 
+    implied barrier. We define the default probability over the time horizon 
+    $(\,0, T\,]$ as the probability of the company's asset value, starting above the 
+    boundary, hitting the barrier at or before $T$. The survival probability, which 
+    equals one minus the default probability, equals the expected payoff of a special 
+    barrier option: The down-and-out digital barrier call when the strike price 
+    equals the barrier (DODC). A DODC pays one dollar at maturity $T$ if and only if 
+    the underlying asset's price never touches the barrier by $T$. Throughout this 
+    thesis, the underlying asset is assumed to be a stock, except in 
+    Chapter~\ref{chap:application}.
+    %Thus, the default probability over the time horizon $(\,0, T\,]$ equals one minus 
+    %the expected payoff of a DODC at maturity $T$.
 
-對酒當歌，人生幾何！譬如朝露，去日苦多。
-慨當以慷，憂思難忘。何以解憂？唯有杜康。
-青青子衿，悠悠我心。但為君故，沉吟至今。
-呦呦鹿鳴，食野之苹。我有嘉賓，鼓瑟吹笙。
-明明如月，何時可掇？憂從中來，不可斷絕。
-越陌度阡，枉用相存。契闊談宴，心念舊恩。
-月明星稀，烏鵲南飛。繞樹三匝，何枝可依？
-山不厭高，海不厭深。周公吐哺，天下歸心。
+    As there are no closed-form formulas for the implied barrier, any numerical 
+    methods to find it must repeatedly calculate the expected payoff of a DODC and 
+    compare it against the target survival probability until the difference is 
+    acceptably small. When the barrier is a constant, the expected payoff can be 
+    easily calculated through a closed-form formula 
+    (see~\cite{ReinerRubinstein1991}). However, when the barrier has a more complex 
+    form, such as a step function, the closed-form formula is hard to compute in 
+    general as it involves a multiple integral (see~\cite{Lee2021}). We adopt tree 
+    algorithms to compute the expected payoff of the DODC with a step barrier because 
+    they are efficient. This thesis focuses on the step-barrier case because a step 
+    barrier can approximate any continuous barrier.
 
-\section{始得西山宴遊記}
+    With the implied barrier in place, we can apply it to corporate default 
+    prediction. The task is to identify whether a company will experience a credit 
+    event within a time horizon. The importance of having an effective default 
+    prediction scheme is self-evident: The cost of default can be high. For example, 
+    in 2007, ``irrational exuberance'' in the market led to an underestimation of 
+    default risk and resulted in the overpricing of such derivatives as 
+    collateralized debt obligations (CDOs) (see~\cite{Shiller2009}). This became a 
+    crucial factor in the ensuing global financial crisis and cost more than a 
+    trillion dollars in national output (see~\cite{Atkinson2013} and 
+    \cite{Nickerson2017}).
 
-自余爲僇人，居是州，恆惴慄。其隙也，則施施而行，漫漫而遊。日與其徒上高山，入深林，窮回溪；幽泉怪石，無遠不到。到則披草而坐，傾壺而醉，醉則更相枕以臥，臥而夢。意有所極，夢亦同趣。覺而起，起而歸。以爲凡是州之山有異態者，皆我有也，而未始知西山之怪特。
+    Typical default prediction schemes provide default probabilities 
+    (see~\cite{Ohlson1980}, \cite{Zmijewski1984}, \cite{Shumway2001}, 
+    \cite{Chava2004}, and \cite{Campbell2008}). While they can be used to rank 
+    companies in terms of default risk, sometimes a binary classification is needed 
+    for decision-making. For example, regulators may need to classify banks as either 
+    at risk of failure or not before taking supervisory actions 
+    (see~\cite{Martin1977}). Of course, a default probability can be converted into a 
+    binary prediction, i.e., default or no-default, by applying a cutoff threshold. 
+    The threshold may be chosen in an ad hoc manner (often 0.5) or based on some 
+    principles (see~\cite{Ohlson1980}, \cite{Zmijewski1984}, \cite{Palepu1986}, and 
+    \cite{Barboza2017}).
+    %In fact, there is evidence suggesting that 0.5 is not an appropriate threshold 
+    %for default probabilities. This is because default is a rare event and a 
+    %threshold of 0.5 assumes a symmetric loss function for default group and 
+    %non-default group, which does not reflect the reality (see~\cite{Ohlson1980}).
 
-今年九月二十八日，因坐法華西亭，望西山，始指異之。遂命僕人過湘江，緣染溪，斫榛莽，焚茅茷，窮山之高而止。攀援而登，箕踞而遨，則凡數州之土壤，皆在衽席之下
+    Unlike thresholds, the implied barrier provides an alternative way to turn 
+    default probabilities into binary default predictions. It is furthermore 
+    economically reasonable. The idea is to compare the company's future expected 
+    asset value with the implied barrier. Default is predicted if and only if the 
+    expected asset value ever touches the implied barrier. Since the implied barrier 
+    is inferred from default probabilities, which in turn rely on market and 
+    accounting data, our scheme focuses on publicly listed companies, for which such 
+    information is available. Finally, this thesis proposes a new scheme to evaluate
+    the performance of binary default prediction schemes.
+    
+\section{Literature Review}\label{sec:introduction-literature_review}
 
-其高下之勢，岈然窪然，若垤若穴，尺寸千里，攢蹙累積，莫得遁隱；縈青繚白，外與天際，四望如一。然後知是山之特出，不與培塿爲類。悠悠乎與灝氣俱，而莫得其涯；洋洋乎與造物者遊，而不知其所窮。
+\subsection{Algorithms for Implied Barrier}\label{sec:introduction-literature_review-algorithms}
+   
+    In structural models, the default probability is equivalent to the probability of 
+    the company's asset value hitting the barrier from above, i.e., the 
+    barrier-hitting probability. Moreover, the barrier-hitting probability equals one 
+    minus the DODC's expected payoff. An option's expected payoff is closely related 
+    to its price: The expected payoff is computed under the real-world measure, while 
+    the option price is evaluated under the risk-neutral measure and involves 
+    discounting. Thus, if one can compute one, one can compute the other with the 
+    same computational time.
 
-引觴滿酌，頹然就醉，不知日之入，蒼然暮色，自遠而至，至無所見，而猶不欲歸。心凝形釋，與萬化冥合。然後知吾向之未始遊，遊於是乎始，故爲之文以志。是歲，元和四年也。
+    A common approach to inferring the implied barrier is to numerically invert 
+    closed-form formulas for either the barrier-hitting probability or the barrier 
+    option price. Under the \citetalias{BS} model, formulas for the barrier-hitting 
+    probability are available for the constant-barrier case 
+    (see~\cite{Ingersoll1987}) and the step-barrier case (see~\cite{Lee2021}). 
+    Formulas for the barrier option price are available for the cases of constant 
+    barrier (see~\cite{Merton1974} and \cite{Reiner1991}), discrete constant barrier 
+    (see~\cite{Broadie1997} and \cite{Kou2003}), partial and window constant barriers 
+    (see~\cite{Heynen1994}, \cite{Hui1997}, and \cite{Armstrong2001}), piecewise 
+    exponential barrier (see~\cite{Kunitomo1992}), step barrier (see~\cite{Lee2021}), 
+    continuously differentiable barrier (see~\cite{Rogers1997}), and a mixture of 
+    continuously and discretely monitored barrier (see~\cite{Chen2010}). Note that 
+    any barrier that is not constant can be viewed as a time-varying barrier, which 
+    is also called a moving barrier in this thesis. Figure~\ref{fig:barriers} shows 
+    five common types of barriers.
+
+    \begin{figure}[!t]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \begin{axis}[
+                        width=\textwidth,
+                        height=0.75\textwidth,
+                        xtick = {0.5,3.5},
+                        xticklabels = {$0$,$T$},
+                        xticklabel style={text height=1.5ex, font=\normalsize},
+                        ytick = {1.5},
+                        yticklabels = {$b$},
+                        yticklabel style={font=\normalsize},
+                        xmin=-0.5,xmax=4,
+                        ymin=0,ymax=3,
+                    ]
+                    \addplot[line,-,domain=0.5:3.5]{1.5}; %node [midway,above] {$b_1$};
+                    \addplot[solid] coordinates{(0.5,1.5)(3.5,1.5)};
+                \end{axis}
+            \end{tikzpicture}
+            \caption{Constant barrier.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \begin{axis}[
+                        width=\textwidth,
+                        height=0.75\textwidth,
+                        xtick = {0.5,1.5,2.5,3.5},
+                        xticklabels = {$0$,$t_1$,$t_2$,$T$},
+                        xticklabel style={text height=1.5ex, font=\normalsize},
+                        ytick = {2.4,0.8,2},
+                        yticklabels = {$b_1$,$b_2$,$b_3$},
+                        yticklabel style={font=\normalsize},
+                        xmin=-0.5,xmax=4,
+                        ymin=0,ymax=3,
+                    ]
+                    \addplot[line,-,domain=0.5:1.5]{2.4}; %node [midway,above] {$b_1$};
+                    \addplot[line,-,domain=1.5:2.5]{0.8}; %node [midway,above] {$b_2$};
+                    \addplot[line,-,domain=2.5:3.5]{2};   %node [midway,above] {$b_m$};
+                    \addplot[hollow]coordinates{(0.5,2.4)(1.5,0.8)(2.5,2)};
+                    \addplot[solid] coordinates{(1.5,2.4)(2.5,0.8)(3.5,2)};
+                \end{axis}
+            \end{tikzpicture}
+            \caption{3-step barrier.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \begin{axis}[
+                        width=\textwidth,
+                        height=0.75\textwidth,
+                        xtick = {0.5,1.5,2.5,3.5,4.5},
+                        xticklabels = {$0$,$t_1$,$t_2$,$\cdots$,$T$},
+                        xticklabel style={text height=1.5ex, font=\normalsize},
+                        ytick = {1.5},
+                        yticklabels = {$b$},
+                        yticklabel style={font=\normalsize},
+                        xmin=-0.5,xmax=5,
+                        ymin=0,ymax=3,
+                    ]
+                    \addplot[solid] coordinates{(0.5,1.5)(1.5,1.5)(2.5,1.5)(4.5,1.5)};
+                \end{axis}
+            \end{tikzpicture}
+            \caption{Discrete constant barrier.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \begin{axis}[
+                        width=\textwidth,
+                        height=0.75\textwidth,
+                        xtick = {0.5,2,3.5},
+                        xticklabels = {$0$,$t_1$,$T$},
+                        xticklabel style={text height=1.5ex, font=\normalsize},
+                        ytick = {1.5},
+                        yticklabels = {$b$},
+                        yticklabel style={font=\normalsize},
+                        xmin=-0.5,xmax=4,
+                        ymin=0,ymax=3,
+                    ]
+                    \addplot[line,-,domain=2:3.5]{1.5}; %node [midway,above] {$b_1$};
+                    \addplot[solid] coordinates{(2,1.5)(3.5,1.5)};
+                \end{axis}
+            \end{tikzpicture}
+            \caption{Partial constant barrier.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \begin{axis}[
+                        width=\textwidth,
+                        height=0.75\textwidth,
+                        xtick = {0.5,1.5,2.5,3.5,4.5},
+                        xticklabels = {$0$,$t_1$,$t_2$,$\cdots$,$T$},
+                        xticklabel style={text height=1.5ex, font=\normalsize},
+                        ytick = {1.5},
+                        yticklabels = {$b$},
+                        %yticklabels = {$ $,$ $,$ $},
+                        yticklabel style={font=\normalsize},
+                        xmin=-0.5,xmax=5,
+                        ymin=0,ymax=3,
+                    ]
+                    \addplot[line,-,domain=1.5:2.5]{1.5}; %node [midway,above] {$b_1$};
+                    \addplot[solid] coordinates{(1.5,1.5)(2.5,1.5)};
+                \end{axis}
+            \end{tikzpicture}
+            \caption{Window constant barrier.}
+        \end{subfigure}
+        \caption{Popular barrier types. $t_i$s are the monitoring points and $T$ is 
+                 the maturity date.}
+        \label{fig:barriers}
+    \end{figure}
+    
+    Recall that we focus on the step-barrier case because a step barrier can 
+    approximate any continuous barrier. Formulas for step-barrier options involve 
+    multiple integrals (\cite{Lee2021}). Extracting the implied barrier from them is 
+    infeasible because the computational cost grows exponentially in the dimension. 
+    Monte Carlo simulation is also not recommended for obtaining the implied barrier 
+    because of its (1) stochastic and moderately large error, and (2) relative 
+    inefficiency. A general and efficient alternative is thus desirable for finding 
+    the implied step barrier. This thesis focuses on trees as a solution.
+    
+    Trees are commonly used to price financial derivatives when closed-form formulas
+    are unavailable or too costly to evaluate (see~\cite{Lyuu2002}). A tree 
+    discretizes the continuous process of the stock price. A properly calibrated tree 
+    converges to the continuous-time model as $n$ increases, where $n$ is the tree's 
+    number of time steps (see~\cite{Duffie1996}). \citetalias{CRR} propose the 
+    first tree based on the BS model, known as the CRR tree. It can be used to price 
+    various kinds of options. For example, the prices of a vanilla call by the CRR 
+    tree are shown in Figure~\ref{fig:crr_call_price}. They clearly converge to the 
+    true value given by the BS formula.
+
+    The CRR tree has its drawbacks. When pricing barrier options in particular, the 
+    CRR tree produces large oscillations, meaning slow convergence. This is caused 
+    mostly by the misalignment between the barrier and the tree nodes, resulting in 
+    the nonlinearity error (see~\cite{Figlewski1999}). 
+    Figure~\ref{fig:crr_dodc_price} illustrates this problem when pricing a DODC. 
+    
+    \begin{figure}[!t]
+        \centering
+        \includegraphics[width = 0.7\textwidth]{figures/crr_call_price.pdf}
+        \caption{The vanilla call prices by the CRR tree for $n = 10,20,30,\ldots,500$. 
+                 %The initial stock price is 95, the strike 
+                 %price is 100, the growth rate is $10\%$, the volatility is $25\%$, 
+                 %and time to maturity is $1$ year. 
+                 The dashed line 11.6573 gives the true value by the BS formula.}
+        \label{fig:crr_call_price}
+    \end{figure}
+    
+    \begin{figure}[!t]
+        \centering
+        \includegraphics[width = 0.7\textwidth]{figures/crr_dodc_price.pdf}
+        \caption{The DODC prices by the CRR tree for $n = 10,20,30,\ldots,500$. 
+                 %The initial stock price is 95, the strike price is 100, the 
+                 %barrier is 90, the growth rate is $10\%$, the volatility is $25\%$, 
+                 %and time to maturity is $1$ year. 
+                 The dashed line 0.2023 gives the true value by \citetalias{ReinerRubinstein1991} formula.}
+        \label{fig:crr_dodc_price}
+    \end{figure}
+
+    \cite{Boyle1994} and \cite{Ritchken1995} reduce the nonlinearity error by placing 
+    critical tree nodes close to or on the barrier. \cite{BTT} propose the 
+    binomial-trinomial tree (BTT), which starts with a trinomial structure and 
+    continues on with a binomial structure. The trinomial part reduces the 
+    nonlinearity error by aligning one of the tree levels in the binomial structure 
+    with the barrier. The subsequent binomial part enables the use of fast 
+    combinatorial formulas (see~\cite{Lyuu1998}) and the fast Fourier transform (FFT) 
+    (see~Chapter~\ref{chap:algorithms}).
+
+\subsection{Convergence Rates for Trees}\label{sec:introduction-literature_review-convergence}
+
+    With trees, the implied barrier is determined by iteratively adjusting the 
+    barrier level to match a target value such as the barrier-hitting probability or 
+    the option's expected payoff. The efficiency of this process depends on how 
+    quickly the algorithm computes the relevant quantity and compares it with the 
+    target value, and on how rapidly the iterative procedure converges.
+    
+    \cite{CRR} not only propose the CRR tree to price options but also demonstrate 
+    its convergence to the BS model. However, they do not address the convergence 
+    rate. \cite{Walsh2003} and \cite{Chang2007} prove a linear convergence rate for 
+    the vanilla European option price by the CRR tree. \cite{Leduc2020} prove a 
+    quadratic convergence rate for the vanilla option price by the CRR tree after 
+    Richardson's extrapolation is applied. \cite{Leduc2023} derive the convergence 
+    rates for European path-independent options by binomial, trinomial, and 
+    $m$-nomial trees. \cite{Lin2013} prove a linear convergence rate for the European 
+    barrier call price given by the CRR tree when (1) the barrier is aligned with one 
+    of the tree levels and (2) the strike price is equal to the barrier. The CRR tree 
+    is unable to align with the barrier in general, in which case the nonlinearity 
+    error makes the convergence erratic and slower than linear, as shown in 
+    Figure~\ref{fig:crr_dodc_price}.
+    
+\subsection{Application to Default Prediction}\label{sec:introduction-literature_review-default_prediction}
+
+    \cite{PeterDrucker} famously opines that ``forecasting is not a respectable human
+    activity and not worthwhile beyond the shortest of periods.'' This thesis will 
+    not contest the statement in the case of predicting company default; an almost
+    perfect predictor for that task is neither our goal nor feasible. Instead, we 
+    believe publicly available financial data, by constraining how the future 
+    unfolds, already afford us very good guidance in predicting company default 
+    within, say, the next 5 years.
+
+    Default models can be used to price corporate debts or monitor the health of 
+    financial entities such as banks and pension funds (see~\cite{Shumway2001}). A 
+    model that can predict the default event of a financial entity with reasonable 
+    accuracy narrows the information asymmetry between investors and management. A 
+    good model may even spot profitable opportunities.
+    
+    Empirical analysis of default becomes active in the 1960s. \cite{Beaver1966} and
+    \cite{Altman1968} apply discriminant analysis to accounting and economic ratios
+    to gauge whether a company is financially sound. \cite{Ohlson1980} and
+    \cite{Zmijewski1984} frame the problem with a logit model. For convenience, we
+    refer to the above models as the traditional models. The advantage of traditional
+    models is the transparent relation between the explanatory variables and the
+    likelihood of default (see~\cite{Altman2019}). However, accounting data, being
+    mostly backward looking, will obviously be strained in predicting future defaults
+    (see~\cite{Hillegeist2004}). \cite{Shumway2001} refers to traditional models as 
+    static models because they are time independent. These models rely on financial 
+    indicators from a single period only, and therefore ignore companies' performance 
+    over time. As a result, they might produce biased predictor variables and thus
+    overlook default companies that had unfavorable indicators in periods other than 
+    the one used in estimation. Outside those traditional approaches, default models 
+    can be grouped into two categories: reduced-form models and structural models.
+
+    Reduced-form models characterize the default event by an \emph{exogenous} point 
+    process in which the default time is the first jump time of the process 
+    (see~\cite{Duffie2003}). Initially, they focus on pricing corporate bonds by 
+    specifying, explicitly or tacitly, a default intensity process and a recovery 
+    rate process (see \cite{Litterman1991}, \cite{Jarrow1995}, \cite{Jarrow1997}, and 
+    \cite{Duffie1999}). The default intensity gives rise to the default 
+    probabilities. The recovery rate refers to the residual proportion of a financial 
+    entity because investors are entitled to the remaining value after bankruptcy. 
+    The default probabilities from reduced-form models have later been applied to 
+    default prediction. \cite{Shumway2001}, \cite{Chava2004}, \cite{Campbell2008}, 
+    and \cite{Bonfim2009} use hazard models to obtain default probabilities. 
+    \cite{DSW} specify a doubly-stochastic formulation of the point process for 
+    defaults and other types of firm exits caused by, for example, leveraged buyout, 
+    seizure by regulator, delisting, or merger and acquisition. \cite{FIM} propose a 
+    forward intensity approach to tackle the high-dimensional problem in \cite{DSW} 
+    and make the implementation more efficient.
+    
+    Since the default event is triggered externally, reduced-form models lack an
+    intuitive explanation of default. In contrast, in structural models, default 
+    occurs when the company's asset value hits the default boundary from above 
+    (recall Section~\ref{sec:introduction-background}). This means the default event 
+    is determined \emph{endogenously} by the company's financial status. This thesis 
+    adopts the structural models because they offer an intuitive explanation of 
+    default events and provide a framework to explicitly talk about the default 
+    boundary. 
+    
+\section{Contributions}\label{sec:introduction-contribution}
+    
+    The contributions of this thesis are as follows. First, we propose a highly
+    efficient $O(n\,\text{log}\,n)$-time tree algorithm based on the BS model to 
+    obtain the implied barrier, where $n$ denotes the tree's number of time steps. We 
+    call it the core algorithm. When compared with the standard implementation, the 
+    core algorithm is at least an order faster. The core algorithm finds the 
+    \emph{exact} implied barrier for a tree from the barrier-hitting probabilities 
+    when the barrier is a step function. The implied barrier is exact in the sense 
+    that it reproduces the barrier-hitting probabilities for \emph{any} $n \geq 1$. 
+    For simplicity, we omit the term ``exact'' in the thesis unless emphasis is 
+    required. In the simplest constant-barrier case, the implied barrier is close to 
+    the true barrier even with small $n$'s. Indeed, using $n = 1$ and $n = 3$ for
+    extrapolation typically suffices to closely approximate the true barrier. 
+
+    Second, we prove that the implied barrier by our core algorithm converges to its 
+    true value at a rate of $O(n^{-1})$ when the barrier is a constant. The numerical 
+    results suggest the same convergence rate holds when the barrier is a step 
+    function. 
+    
+    Finally, we propose a binary default prediction scheme under structural models as 
+    an application of the implied barrier. The core algorithm's accuracy and super 
+    efficiency are the keys to handling this task because the dataset is huge. 
+    Moreover, we propose a new scheme to evaluate binary default prediction schemes.
+    The results suggest that the implied barrier performs well in predicting 
+    corporate defaults for companies listed on U.S. exchanges. 
+
+    The remainder of this thesis is structured as follows. 
+    Chapter~\ref{chap:preliminaries} introduces the preliminaries and notations used 
+    throughout the thesis. Chapter~\ref{chap:algorithms} presents the proposed tree
+    algorithm for finding the implied barrier and its adaptations for option pricing.
+    Chapter~\ref{chap:convergence} provides the mathematical proof of the linear 
+    convergence rate of the implied barrier. Chapter~\ref{chap:application} explores 
+    the practical applications of the implied barrier in corporate default 
+    prediction. 
